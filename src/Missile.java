@@ -11,6 +11,10 @@ import java.awt.Graphics;
 public class Missile {
 	public int speedX;
 	public int speedY;
+	
+	public int width = 10;
+	public int height = 10;
+	
 	int x, y;
 	Tank.Direction dir;
 	
@@ -31,7 +35,7 @@ public class Missile {
 	public void draw(Graphics g) {
 		Color c = g.getColor();
 		g.setColor(this.color);
-		g.fillOval(x, y, 10, 10);
+		g.fillOval(x, y, this.width, this.height);
 		g.setColor(c);
 		
 		move();

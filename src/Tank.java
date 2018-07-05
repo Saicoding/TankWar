@@ -7,14 +7,19 @@ public class Tank {
 	private int speedX;//x方向速度
 	private int speedY;//y方向速度	
 	
+	public int width = 30;//坦克宽度
+	public int height = 30;//坦克高度
+	public int missileWidth = 10;//该坦克弹管宽度
+	public int missileHeight = 10;//该坦克弹管高度
+	public int missileSpeed = 5;//子弹比坦克快的数字
+	
 	private boolean bL = false,bR = false,bU = false,bD = false;//定义初始四个方向键按下状态
-	private Direction lastDir = Direction.D;
 	
 	TankClient tc;	//利用构造函数持有对象引用
 	
-	enum Direction {L,R,U,D,LD,DR,RU,UL,STOP};
+	enum Direction {L,R,U,D,LD,DR,RU,UL,STOP};//枚举9个方向，其中STOP是停止状态
 	
-	private Direction dir = Direction.STOP;
+	private Direction dir = Direction.STOP;//设置默认方向是停止状态
 
 	public Tank(int x, int y, int speed) {
 		this.x = x;
@@ -32,7 +37,7 @@ public class Tank {
 	public void draw(Graphics g) {
 		Color c = g.getColor();//得到前景色
 		g.setColor(Color.RED);//设置坦克的颜色是红色
-		g.fillOval(x,y,30,30);//画坦克
+		g.fillOval(x,y,this.width,this.height);//画坦克
 		g.setColor(c);//恢复前景色
 		
 		move();
@@ -132,7 +137,9 @@ public class Tank {
 
 	//射击,用面向对象的思想，当坦克射击时会射出一个子弹
 	public Missile fire() {
-		Missile m =new Missile(this.x+5, this.y, this.dir, this.speedX+5);	
+		int x = this.x + this.width/2 - this.missileWidth/2;
+		int y = this.y + this.height/2 - this.missileHeight/2;
+		Missile m =new Missile(x, y, this.dir, this.speedX+this.missileSpeed);	
 		return m;
 	}
 }
