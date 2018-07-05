@@ -93,7 +93,7 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 		
 		public void run() {
 			while(true) {
-				myTank.move(TankClient.keyLeftPressed,TankClient.keyRightPressed,TankClient.keyUpPressed,TankClient.keyDownPressed);//每画一次之前坦克移动一次
+				myTank.move();//每画一次之前坦克移动一次
 				repaint();//直接访问包装类的成员方法
 				try {
 					Thread.sleep(20);
@@ -109,32 +109,17 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	 */
 	private class KeyMonitor extends KeyAdapter{//这里选择继承的原因是，如果选择implements 就要实现这个接口里的所有方法
 		//设置按键状态
-		public void setKeyPressed(KeyEvent e,boolean b) {
-			int key = e.getKeyCode();
-			switch(key) {
-			case KeyEvent.VK_LEFT:
-				keyLeftPressed = b;
-				break;
-			case KeyEvent.VK_RIGHT:
-				keyRightPressed = b;
-				break;
-			case KeyEvent.VK_UP:
-				keyUpPressed = b;
-				break;
-			case KeyEvent.VK_DOWN:
-				keyDownPressed = b;
-				break;
-			}
-		}
+
 
 		@Override
 		public void keyPressed(KeyEvent e) {
-			setKeyPressed(e,true);
+			myTank.keyPressed(e);
+			
 		}
 
 		@Override
 		public void keyReleased(KeyEvent e) {
-			setKeyPressed(e,false);
+			myTank.keyRelease(e);
 		}
 	}
 }
