@@ -25,7 +25,9 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	static boolean keyUpPressed = false;//设置默认按键状态
 	static boolean keyDownPressed = false;//设置默认按键状态
 	
-	Tank myTank = new Tank(50,50,5);
+	Tank myTank = new Tank(50,50,5,this);
+	
+	Missile m =null;
 	
 	/*
 	 * 主函数
@@ -39,6 +41,9 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 
 	@Override
 	public void paint(Graphics g) {
+		if(m !=null) {
+			m.draw(g);
+		}
 		myTank.draw(g);
 	}
 	
@@ -93,7 +98,6 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 		
 		public void run() {
 			while(true) {
-				myTank.move();//每画一次之前坦克移动一次
 				repaint();//直接访问包装类的成员方法
 				try {
 					Thread.sleep(20);
