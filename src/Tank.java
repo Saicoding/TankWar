@@ -76,42 +76,65 @@ public class Tank {
 	
 	//根据真实按键设置坦克方向状态
 	public void setKeyStatus(KeyEvent e,boolean b) {
-		int key = e.getKeyCode();
-		switch(key) {
-		//如果按了ctrl键，就发射子弹，将坦克产生的子弹对象传给客户端tc.m
-		case KeyEvent.VK_CONTROL:		
-		case KeyEvent.VK_SPACE:	
-			tc.m = fire();
-			break;
-		case KeyEvent.VK_LEFT:
-		case KeyEvent.VK_J:
-			bL = b;
-			break;
-		case KeyEvent.VK_RIGHT:
-		case KeyEvent.VK_L:	
-			bR = b;
-			break;
-		case KeyEvent.VK_UP:
-		case KeyEvent.VK_I:		
-			bU = b;
-			break;
-		case KeyEvent.VK_DOWN:
-		case KeyEvent.VK_K:	
-			bD = b;
-			break;
-		}
+
 
 	}
 	
 	//按键按下状态
 	public void keyPressed(KeyEvent e) {
-		setKeyStatus(e, true);
+		int key = e.getKeyCode();
+		switch(key) {
+			//如果按了ctrl键，就发射子弹，将坦克产生的子弹对象添加到tc.missiles中
+//			case KeyEvent.VK_CONTROL:		
+//			case KeyEvent.VK_SPACE:	
+//				tc.missiles.add(fire());
+//				break;
+			case KeyEvent.VK_LEFT:
+			case KeyEvent.VK_J:
+				bL = true;
+				break;
+			case KeyEvent.VK_RIGHT:
+			case KeyEvent.VK_L:	
+				bR = true;
+				break;
+			case KeyEvent.VK_UP:
+			case KeyEvent.VK_I:		
+				bU = true;
+				break;
+			case KeyEvent.VK_DOWN:
+			case KeyEvent.VK_K:	
+				bD = true;
+				break;
+		}
 		locateDirection();
 	}
 	
 	//按键释放状态
 	public void keyRelease(KeyEvent e) {
-		setKeyStatus(e, false);
+		int key = e.getKeyCode();
+		switch(key) {
+		//如果松开了ctrl键，就发射子弹，将坦克产生的子弹对象添加到tc.missiles中
+		case KeyEvent.VK_CONTROL:		
+		case KeyEvent.VK_SPACE:	
+			tc.missiles.add(fire());
+			break;
+		case KeyEvent.VK_LEFT:
+		case KeyEvent.VK_J:
+			bL = false;
+			break;
+		case KeyEvent.VK_RIGHT:
+		case KeyEvent.VK_L:	
+			bR = false;
+			break;
+		case KeyEvent.VK_UP:
+		case KeyEvent.VK_I:		
+			bU = false;
+			break;
+		case KeyEvent.VK_DOWN:
+		case KeyEvent.VK_K:	
+			bD = false;
+			break;
+		}
 		locateDirection();
 	}		
 	
@@ -174,7 +197,6 @@ public class Tank {
 	public Missile fire() {
 		int x = this.x + this.width/2 - this.missileWidth/2;
 		int y = this.y + this.height/2 - this.missileHeight/2;
-		System.out.println(this.speedX+this.missileSpeed);
 		Missile m =new Missile(x, y, this.ptDir, this.speedX+this.missileSpeed);//炮筒方向是哪个，子弹方向就是哪个
 		return m;
 	}

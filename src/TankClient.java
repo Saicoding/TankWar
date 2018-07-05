@@ -10,6 +10,8 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方法，建议用这种方式
 
@@ -25,9 +27,11 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	static boolean keyUpPressed = false;//设置默认按键状态
 	static boolean keyDownPressed = false;//设置默认按键状态
 	
-	Tank myTank = new Tank(50,50,5,this);
+	Tank myTank = new Tank(50,50,5,this);//new出自己的坦克
 	
-	Missile m =null;
+	List<Missile> missiles = new ArrayList<Missile>();//子弹容器
+	
+	Image offScreenImage = null;//声明一个虚拟图片，一次性展现，解决闪屏问题
 	
 	/*
 	 * 主函数
@@ -36,14 +40,20 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 		TankClient tc = new TankClient();
 		tc.launchFream();
 	}
-
-	Image offScreenImage = null;//声明一个虚拟图片，一次性展现，解决闪屏问题
+	
 
 	@Override
 	public void paint(Graphics g) {
-		if(m !=null) {
+		//画数值
+		g.drawString("missiles count:" + missiles.size(), 10, 50);
+		
+		//画子弹
+		for(int i = 0 ;i<missiles.size();i++) {
+			Missile m = missiles.get(i);
 			m.draw(g);
 		}
+		
+		//画坦克
 		myTank.draw(g);
 	}
 	
