@@ -1,3 +1,7 @@
+/**   
+ * @author:        Saiyan
+ * @date:          2018年7月5日 下午5:17:36  
+ */   
 import java.awt.Color;
 import java.awt.Frame;
 import java.awt.Graphics;
@@ -6,13 +10,13 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方法，建议用这种方式
-	/**   
-	 * @author:        Saiyan
-	 * @date:          2018年7月5日 下午5:17:36  
-	 */   
+	public static final int GAME_WIDTH = 800 ;//游戏屏幕高度
+	public static final int GAME_HEIGHT = 600 ;//游戏屏幕宽度
+	public static final int GAME_POSITION_X= 0 ;//游戏屏幕位置x
+	public static final int GAME_POSITION_Y= 455 ;//游戏屏幕位置y
+	public static final Color FRONT_COLOR = new Color(127,255,0);//游戏前景色
+
 	int x = 50,y =50;
-	
-	private static final Color FRONT_COLOR = new Color(127,255,0);
 	
 	Image offScreenImage = null;//声明一个虚拟图片，一次性展现，解决闪屏问题
 
@@ -30,20 +34,20 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	//截取update方法，让图片一次性显示，解决闪屏问题，update原来的方法是刷
 	public void update(Graphics g) {
 		if(offScreenImage == null) {
-			offScreenImage = this.createImage(800,600);
+			offScreenImage = this.createImage(GAME_WIDTH,GAME_HEIGHT);
 		}
 		Graphics gOffScreen = offScreenImage.getGraphics();//先拿到画笔
 		Color c = gOffScreen.getColor();//得到前景色
 		gOffScreen.setColor(FRONT_COLOR );	//设置前景色
-		gOffScreen.fillRect(0, 0, 800, 600);
+		gOffScreen.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 		gOffScreen.setColor(c);//恢复回来颜色
 		paint(gOffScreen);//把图片画到虚拟图片
 		g.drawImage(offScreenImage, 0, 0, null);//把虚拟图片一次性贴到画布上
 	}
 
 	public void launchFream() {
-		 this.setLocation(0,455);
-		 this.setSize(800,600);
+		 this.setLocation(GAME_POSITION_X,GAME_POSITION_Y);
+		 this.setSize(GAME_WIDTH,GAME_HEIGHT);
 		 this.addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(WindowEvent e) {
