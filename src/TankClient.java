@@ -12,18 +12,20 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方法，建议用这种方式
+
+	private static final long serialVersionUID = 1L;
 	public static final int GAME_WIDTH = 800 ;//游戏屏幕高度
 	public static final int GAME_HEIGHT = 600 ;//游戏屏幕宽度
 	public static final int GAME_POSITION_X= 0 ;//游戏屏幕位置x
 	public static final int GAME_POSITION_Y= 455 ;//游戏屏幕位置y
-	public static final Color FRONT_COLOR = new Color(127,255,0);//游戏前景色
+	public static final Color FRONT_COLOR = new Color(127,255,0);//游戏前景色	
 	
-	int x = 50,y =50;//初始坦克位置
-	int speed = 5;//坦克速度
-	boolean keyLeftPressed = false;//设置默认按键状态
-	boolean keyRightPressed = false;//设置默认按键状态
-	boolean keyUpPressed = false;//设置默认按键状态
-	boolean keyDownPressed = false;//设置默认按键状态
+	static boolean keyLeftPressed = false;//设置默认按键状态
+	static boolean keyRightPressed = false;//设置默认按键状态
+	static boolean keyUpPressed = false;//设置默认按键状态
+	static boolean keyDownPressed = false;//设置默认按键状态
+	
+	Tank myTank = new Tank(50,50,5);
 	
 	/*
 	 * 主函数
@@ -33,16 +35,11 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 		tc.launchFream();
 	}
 
-
-	
 	Image offScreenImage = null;//声明一个虚拟图片，一次性展现，解决闪屏问题
 
 	@Override
 	public void paint(Graphics g) {
-		Color c = g.getColor();//得到前景色
-		g.setColor(Color.RED);//设置坦克的颜色是红色
-		g.fillOval(x,y,30,30);//画坦克
-		g.setColor(c);//恢复前景色
+		myTank.draw(g);
 	}
 	
 	@Override
@@ -77,9 +74,8 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 			}
 			 
 		});
-		 
-		 
-		 this.addKeyListener(new KeyMonitor());	//监听键盘事件	 
+		//监听键盘事件
+		 this.addKeyListener(new KeyMonitor());		 
     
 		 this.setTitle("坦克大战");		//设置标题 	
 		 this.setBackground(FRONT_COLOR );//设置背景颜色
@@ -94,23 +90,10 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	 * 启用一个线程来刷新(重画)画布
 	 */
 	private class PaintThread implements Runnable {
-		/*
-		 * 根据按键状态改变坦克的x,y变量
-		 */
-		private void changePostion() {
-			if(keyLeftPressed)
-				x -= speed;
-			if(keyRightPressed)
-				x += speed;
-			if(keyUpPressed)
-				y -= speed;
-			if(keyDownPressed)
-				y += speed;			
-		}
 		
 		public void run() {
 			while(true) {
-				changePostion();//改变位置
+				myTank.move(TankClient.keyLeftPressed,TankClient.keyRightPressed,TankClient.keyUpPressed,TankClient.keyDownPressed);//每画一次之前坦克移动一次
 				repaint();//直接访问包装类的成员方法
 				try {
 					Thread.sleep(20);
@@ -125,44 +108,33 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	 * 键盘监听，实现键盘控制坦克
 	 */
 	private class KeyMonitor extends KeyAdapter{//这里选择继承的原因是，如果选择implements 就要实现这个接口里的所有方法
+		//设置按键状态
+		public void setKeyPressed(KeyEvent e,boolean b) {
+			int key = e.getKeyCode();
+			switch(key) {
+			case KeyEvent.VK_LEFT:
+				keyLeftPressed = b;
+				break;
+			case KeyEvent.VK_RIGHT:
+				keyRightPressed = b;
+				break;
+			case KeyEvent.VK_UP:
+				keyUpPressed = b;
+				break;
+			case KeyEvent.VK_DOWN:
+				keyDownPressed = b;
+				break;
+			}
+		}
 
 		@Override
 		public void keyPressed(KeyEvent e) {
-			int key = e.getKeyCode();
-			switch(key) {
-				case KeyEvent.VK_LEFT:
-					keyLeftPressed = true;
-					break;
-				case KeyEvent.VK_RIGHT:
-					keyRightPressed = true;
-					break;
-				case KeyEvent.VK_UP:
-					keyUpPressed = true;
-					break;
-				case KeyEvent.VK_DOWN:
-					keyDownPressed = true;
-					break;
-			}
+			setKeyPressed(e,true);
 		}
 
 		@Override
 		public void keyReleased(KeyEvent e) {
-			int key = e.getKeyCode();
-			switch(key) {
-				case KeyEvent.VK_LEFT:
-					keyLeftPressed = false;
-					break;
-				case KeyEvent.VK_RIGHT:
-					keyRightPressed = false;
-					break;
-				case KeyEvent.VK_UP:
-					keyUpPressed = false;
-					break;
-				case KeyEvent.VK_DOWN:
-					keyDownPressed = false;
-					break;
-			}
+			setKeyPressed(e,false);
 		}
-		
 	}
 }
