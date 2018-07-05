@@ -19,9 +19,10 @@ public class Missile {
 	Tank.Direction dir;
 	
 	//随机产生颜色
-	int r = (int)Math.random()*255;
-	int g = (int)Math.random()*255;
-	int b = (int)Math.random()*255;
+	int r = (int)(Math.random()*175);
+	int g = (int)(Math.random()*175);
+	int b = (int)(Math.random()*175);
+
 	Color color = new Color(r,g,b);
 	
 	public Missile(int x, int y, Tank.Direction dir,int speed) {

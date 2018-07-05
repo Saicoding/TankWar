@@ -20,6 +20,7 @@ public class Tank {
 	enum Direction {L,R,U,D,LD,DR,RU,UL,STOP};//枚举9个方向，其中STOP是停止状态
 	
 	private Direction dir = Direction.STOP;//设置默认方向是停止状态
+	private Direction ptDir = Direction.D;
 
 	public Tank(int x, int y, int speed) {
 		this.x = x;
@@ -35,11 +36,41 @@ public class Tank {
 	}
 	//坦克形状
 	public void draw(Graphics g) {
+		//画坦克
 		Color c = g.getColor();//得到前景色
 		g.setColor(Color.RED);//设置坦克的颜色是红色
-		g.fillOval(x,y,this.width,this.height);//画坦克
+		g.fillOval(x,y,this.width,this.height);
 		g.setColor(c);//恢复前景色
 		
+		//画炮筒
+		switch(this.ptDir) {
+			case L :
+				g.drawLine(x + this.width/2, y + this.height/2, x, y + this.height/2);
+				break;
+			case R :
+				g.drawLine(x + this.width/2, y + this.height/2, x + this.width, y + this.height/2);
+				break;
+			case U :
+				g.drawLine(x + this.width/2, y + this.height/2, x + this.width/2, y);
+				break;
+			case D :
+				g.drawLine(x + this.width/2, y + this.height/2, x + this.width/2, y + this.height);
+				break;
+			case LD :
+				g.drawLine(x + this.width/2, y + this.height/2, x, y + this.height);
+				break;
+			case DR :
+				g.drawLine(x + this.width/2, y + this.height/2, x + this.width, y + this.height);
+				break;
+			case RU :
+				g.drawLine(x + this.width/2, y + this.height/2, x + this.width, y);
+				break;
+			case UL :
+				g.drawLine(x + this.width/2, y + this.height/2, x, y);
+				break;
+		default:
+			break;
+		}		
 		move();
 	}
 	
@@ -120,6 +151,10 @@ public class Tank {
 				y -= 0;
 				break;
 		}	
+		//移动时随时调整炮筒方向
+		if(this.dir != Direction.STOP) {
+			this.ptDir = this.dir;
+		}
 	}
 	
 	//确定坦克方向dir
@@ -139,7 +174,8 @@ public class Tank {
 	public Missile fire() {
 		int x = this.x + this.width/2 - this.missileWidth/2;
 		int y = this.y + this.height/2 - this.missileHeight/2;
-		Missile m =new Missile(x, y, this.dir, this.speedX+this.missileSpeed);	
+		System.out.println(this.speedX+this.missileSpeed);
+		Missile m =new Missile(x, y, this.ptDir, this.speedX+this.missileSpeed);//炮筒方向是哪个，子弹方向就是哪个
 		return m;
 	}
 }
