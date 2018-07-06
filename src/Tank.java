@@ -1,5 +1,6 @@
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.event.KeyEvent;
 
 public class Tank {
@@ -7,11 +8,22 @@ public class Tank {
 	private int speedX;//x方向速度
 	private int speedY;//y方向速度	
 	
-	public int width = 30;//坦克宽度
-	public int height = 30;//坦克高度
+	private int tw = 10;//履带宽度
+	private int th = 80;//履带高度
+	private int mw = 30;//中断宽度
+	private int mh = 60;//中间高度
+	private int cx ;
+	private int cy ;
+	
 	public int missileWidth = 10;//该坦克弹管宽度
 	public int missileHeight = 10;//该坦克弹管高度
 	public int missileSpeed = 5;//子弹比坦克快的数字
+	private int lvdaiPosition = 5;//履带位置
+	
+	
+	
+	private int px;//子弹出膛中心x
+	private int py;//子弹出膛中心y
 	
 	private boolean bL = false,bR = false,bU = false,bD = false;//定义初始四个方向键按下状态
 	
@@ -34,52 +46,86 @@ public class Tank {
 		this(x,y, speed);
 		this.tc = tc;
 	}
-	//坦克形状
-	public void draw(Graphics g) {
+	
+	public void tankModal(Graphics g,int angel) {
+
+		this.cx = x + tw+mw/2;//中心x坐标
+		this.cy = y + th/2;//中心y坐标
+		int pw = 2;//炮筒宽度
+		int ph = th/2;
+		int fx = 1;//缝隙
+
+		Graphics2D g2 = (Graphics2D) g;
+		g2.rotate(Math.toRadians(angel),cx,cy);
+
 		//画坦克
-		Color c = g.getColor();//得到前景色
-		g.setColor(Color.RED);//设置坦克的颜色是红色
-		g.fillOval(x,y,this.width,this.height);
-		g.setColor(c);//恢复前景色
+//		Color c = g2.getColor();//得到前景色
+		g2.setColor(new Color(178, 178, 0));
+//		g.fillOval(x,y,this.width,this.height);
+//		g.setColor(c);//恢复前景色
+				
+		//画两个履带
+		g2.fillRect(cx-tw-mw/2, cy-th/2, tw, th);
+		g2.fillRect(cx+mw/2, cy-th/2, tw, th);
+
+		//画中间车身
+		g2.setColor(new Color(178, 178, 0));
+		g2.fillRect(cx-mw/2+fx+1, cy-mh/2, mw-fx-fx-fx, mh);
 		
 		//画炮筒
+		g2.setColor(new Color(255, 255, 0));//设置炮筒颜色
+		g2.fillRect(cx-pw/2, cy-ph, pw, ph);
+		g2.fillOval(cx-mw/2,cy-mw/2,mw,mw);
+		 
+		g2.drawRect(cx-tw-mw/2, cy-th/2, tw, th);
+		g2.drawRect(cx+mw/2, cy-th/2, tw, th);
+		
+		//画履带格子
+		for(int i = 0 ;this.lvdaiPosition+i*5 < th;i++) {
+			g2.drawLine(cx-tw-mw/2, cy-th/2+i*5+this.lvdaiPosition, cx-mw/2, cy-th/2+i*5+this.lvdaiPosition);
+			g2.drawLine(cx+tw+mw/2, cy-th/2+i*5+this.lvdaiPosition, cx+mw/2, cy-th/2+i*5+this.lvdaiPosition);
+		}
+
+	}
+	//画坦克
+	public void draw(Graphics g) {
+		this.cx = this.x+ tw+mw/2;;//中心x坐标
+		this.cy = this.y;//中心y坐标
 		switch(this.ptDir) {
 			case L :
-				g.drawLine(x + this.width/2, y + this.height/2, x, y + this.height/2);
+				tankModal(g,-90);
 				break;
 			case R :
-				g.drawLine(x + this.width/2, y + this.height/2, x + this.width, y + this.height/2);
+				tankModal(g,90);
+
 				break;
 			case U :
-				g.drawLine(x + this.width/2, y + this.height/2, x + this.width/2, y);
+				tankModal(g,0);
 				break;
 			case D :
-				g.drawLine(x + this.width/2, y + this.height/2, x + this.width/2, y + this.height);
+				tankModal(g,180);
+				
 				break;
 			case LD :
-				g.drawLine(x + this.width/2, y + this.height/2, x, y + this.height);
+				tankModal(g,-135);
 				break;
 			case DR :
-				g.drawLine(x + this.width/2, y + this.height/2, x + this.width, y + this.height);
+				tankModal(g,135);
 				break;
 			case RU :
-				g.drawLine(x + this.width/2, y + this.height/2, x + this.width, y);
+				tankModal(g,45);
 				break;
 			case UL :
-				g.drawLine(x + this.width/2, y + this.height/2, x, y);
+				tankModal(g,-45);
 				break;
-		default:
-			break;
+			case STOP:
+				tankModal(g,0);
+				break;
 		}		
+
 		move();
 	}
-	
-	//根据真实按键设置坦克方向状态
-	public void setKeyStatus(KeyEvent e,boolean b) {
 
-
-	}
-	
 	//按键按下状态
 	public void keyPressed(KeyEvent e) {
 		int key = e.getKeyCode();
@@ -154,28 +200,34 @@ public class Tank {
 				y +=speedY;
 				break;
 			case LD :
-				x -=speedX;
-				y +=speedY;
+				x -=(int)(speedX/Math.sqrt(2));
+				y +=(int)(speedY/Math.sqrt(2));
 				break;
 			case DR :
-				y +=speedY;
-				x +=speedX;
+				y +=(int)(speedY/Math.sqrt(2));
+				x +=(int)(speedX/Math.sqrt(2));
 				break;
 			case RU :
-				x +=speedX;
-				y -=speedY;
+				x +=(int)(speedX/Math.sqrt(2));
+				y -=(int)(speedY/Math.sqrt(2));
 				break;
 			case UL :
-				y -=speedY;
-				x -=speedX;
+				y -=(int)(speedY/Math.sqrt(2));
+				x -=(int)(speedX/Math.sqrt(2));
 				break;
 			case STOP:
 				x -= 0;
 				y -= 0;
 				break;
 		}	
+		
 		//移动时随时调整炮筒方向
 		if(this.dir != Direction.STOP) {
+			//更新履带状态
+			this.lvdaiPosition -=1;
+			if(this.lvdaiPosition ==0)
+				this.lvdaiPosition =5;
+			//更新子弹方向
 			this.ptDir = this.dir;
 		}
 	}
@@ -195,9 +247,7 @@ public class Tank {
 
 	//射击,用面向对象的思想，当坦克射击时会射出一个子弹
 	public Missile fire() {
-		int x = this.x + this.width/2 - this.missileWidth/2;
-		int y = this.y + this.height/2 - this.missileHeight/2;
-		Missile m =new Missile(x, y, this.ptDir, this.speedX+this.missileSpeed);//炮筒方向是哪个，子弹方向就是哪个
+		Missile m =new Missile(cx, cy, this.ptDir, this.speedX+this.missileSpeed);//炮筒方向是哪个，子弹方向就是哪个
 		return m;
 	}
 }

@@ -18,6 +18,8 @@ public class Missile {
 	int x, y;
 	Tank.Direction dir;
 	
+	private boolean bLive = true;//一new出来肯定是活着的
+	
 	//随机产生颜色
 	int r = (int)(Math.random()*175);
 	int g = (int)(Math.random()*175);
@@ -36,7 +38,7 @@ public class Missile {
 	public void draw(Graphics g) {
 		Color c = g.getColor();
 		g.setColor(this.color);
-		g.fillOval(x, y, this.width, this.height);
+		g.fillOval(x-this.width/2, y-this.height/2, this.width, this.height);
 		g.setColor(c);
 		
 		move();
@@ -57,20 +59,20 @@ public class Missile {
 				y +=speedY;
 				break;
 			case LD :
-				x -=speedX;
-				y +=speedY;
+				x -=(int)(speedX/Math.sqrt(2));
+				y +=(int)(speedY/Math.sqrt(2));
 				break;
 			case DR :
-				y +=speedY;
-				x +=speedX;
+				y +=(int)(speedY/Math.sqrt(2));
+				x +=(int)(speedX/Math.sqrt(2));
 				break;
 			case RU :
-				x +=speedX;
-				y -=speedY;
+				x +=(int)(speedX/Math.sqrt(2));
+				y -=(int)(speedY/Math.sqrt(2));
 				break;
 			case UL :
-				y -=speedY;
-				x -=speedX;
+				y -=(int)(speedY/Math.sqrt(2));
+				x -=(int)(speedX/Math.sqrt(2));
 				break;
 			case STOP:
 				x -= 0;

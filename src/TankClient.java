@@ -5,6 +5,7 @@
 import java.awt.Color;
 import java.awt.Frame;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -16,11 +17,11 @@ import java.util.List;
 public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方法，建议用这种方式
 
 	private static final long serialVersionUID = 1L;
-	public static final int GAME_WIDTH = 800 ;//游戏屏幕高度
-	public static final int GAME_HEIGHT = 600 ;//游戏屏幕宽度
-	public static final int GAME_POSITION_X= 0 ;//游戏屏幕位置x
-	public static final int GAME_POSITION_Y= 455 ;//游戏屏幕位置y
-	public static final Color FRONT_COLOR = new Color(127,255,0);//游戏前景色	
+	public static final int GAME_WIDTH = 1400 ;//游戏屏幕高度
+	public static final int GAME_HEIGHT = 900 ;//游戏屏幕宽度
+	public static final int GAME_POSITION_X= 100 ;//游戏屏幕位置x
+	public static final int GAME_POSITION_Y= 100 ;//游戏屏幕位置y
+	public static final Color FRONT_COLOR = new Color(51,51,51);//游戏前景色	
 	
 	static boolean keyLeftPressed = false;//设置默认按键状态
 	static boolean keyRightPressed = false;//设置默认按键状态
@@ -28,6 +29,8 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	static boolean keyDownPressed = false;//设置默认按键状态
 	
 	Tank myTank = new Tank(50,50,5,this);//new出自己的坦克
+	
+
 	
 	List<Missile> missiles = new ArrayList<Missile>();//子弹容器
 	
@@ -55,6 +58,7 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 		
 		//画坦克
 		myTank.draw(g);
+
 	}
 	
 	@Override
@@ -123,7 +127,6 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	 */
 	private class KeyMonitor extends KeyAdapter{//这里选择继承的原因是，如果选择implements 就要实现这个接口里的所有方法
 		//设置按键状态
-
 
 		@Override
 		public void keyPressed(KeyEvent e) {
