@@ -8,7 +8,7 @@ public class Tank {
 	private int speedX;//x方向速度
 	private int speedY;//y方向速度	
 	
-	private int tw = 10;//履带宽度
+	private int tw = 11;//履带宽度
 	private int th = 80;//履带高度
 	private int mw = 30;//中断宽度
 	private int mh = 60;//中间高度
@@ -19,11 +19,8 @@ public class Tank {
 	public int missileHeight = 10;//该坦克弹管高度
 	public int missileSpeed = 5;//子弹比坦克快的数字
 	private int lvdaiPosition = 5;//履带位置
-	
-	
-	
-	private int px;//子弹出膛中心x
-	private int py;//子弹出膛中心y
+	private int lvdaiSpace = 6;//履带条纹间隙
+	private int fengxi = 1;//车身缝隙
 	
 	private boolean bL = false,bR = false,bU = false,bD = false;//定义初始四个方向键按下状态
 	
@@ -51,39 +48,43 @@ public class Tank {
 
 		this.cx = x + tw+mw/2;//中心x坐标
 		this.cy = y + th/2;//中心y坐标
+
 		int pw = 2;//炮筒宽度
 		int ph = th/2;
-		int fx = 1;//缝隙
 
 		Graphics2D g2 = (Graphics2D) g;
 		g2.rotate(Math.toRadians(angel),cx,cy);
-
-		//画坦克
-//		Color c = g2.getColor();//得到前景色
 		g2.setColor(new Color(178, 178, 0));
-//		g.fillOval(x,y,this.width,this.height);
-//		g.setColor(c);//恢复前景色
-				
+			
 		//画两个履带
 		g2.fillRect(cx-tw-mw/2, cy-th/2, tw, th);
 		g2.fillRect(cx+mw/2, cy-th/2, tw, th);
 
 		//画中间车身
 		g2.setColor(new Color(178, 178, 0));
-		g2.fillRect(cx-mw/2+fx+1, cy-mh/2, mw-fx-fx-fx, mh);
+		g2.fillRect(cx-mw/2+fengxi, cy-mh/2, mw-2*fengxi, mh);
 		
 		//画炮筒
 		g2.setColor(new Color(255, 255, 0));//设置炮筒颜色
 		g2.fillRect(cx-pw/2, cy-ph, pw, ph);
-		g2.fillOval(cx-mw/2,cy-mw/2,mw,mw);
+		g2.fillOval(cx-mw/2+fengxi,cy-mw/2,mw-2,mw);
 		 
-		g2.drawRect(cx-tw-mw/2, cy-th/2, tw, th);
-		g2.drawRect(cx+mw/2, cy-th/2, tw, th);
+//		g2.drawRect(cx-tw-mw/2, cy-th/2, tw, th);
+//		g2.drawRect(cx+mw/2, cy-th/2, tw, th);
 		
 		//画履带格子
-		for(int i = 0 ;this.lvdaiPosition+i*5 < th;i++) {
-			g2.drawLine(cx-tw-mw/2, cy-th/2+i*5+this.lvdaiPosition, cx-mw/2, cy-th/2+i*5+this.lvdaiPosition);
-			g2.drawLine(cx+tw+mw/2, cy-th/2+i*5+this.lvdaiPosition, cx+mw/2, cy-th/2+i*5+this.lvdaiPosition);
+		for(int i = 0 ;this.lvdaiPosition+i*lvdaiSpace < th;i++) {
+			//做修正
+			if(ptDir == Direction.D || ptDir == Direction.L) {
+				g2.drawLine(cx-tw-mw/2+fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition, cx-mw/2, cy-th/2+i*lvdaiSpace +this.lvdaiPosition);
+				g2.drawLine(cx+mw/2+fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition, cx+mw/2+tw, cy-th/2+i*lvdaiSpace +this.lvdaiPosition);
+			}else if(ptDir == Direction.RU || ptDir ==Direction.UL || ptDir ==Direction.LD || ptDir ==Direction.DR) {
+				g2.drawLine(cx-tw-mw/2+2*fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition, cx-mw/2-fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition);
+				g2.drawLine(cx+mw/2+2*fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition, cx+mw/2+tw-fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition);
+			}else {
+				g2.drawLine(cx-tw-mw/2, cy-th/2+i*lvdaiSpace +this.lvdaiPosition, cx-mw/2-fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition);
+				g2.drawLine(cx+mw/2, cy-th/2+i*lvdaiSpace +this.lvdaiPosition, cx+mw/2+tw-fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition);
+			}
 		}
 
 	}
@@ -97,14 +98,12 @@ public class Tank {
 				break;
 			case R :
 				tankModal(g,90);
-
 				break;
 			case U :
 				tankModal(g,0);
 				break;
 			case D :
 				tankModal(g,180);
-				
 				break;
 			case LD :
 				tankModal(g,-135);
@@ -224,9 +223,9 @@ public class Tank {
 		//移动时随时调整炮筒方向
 		if(this.dir != Direction.STOP) {
 			//更新履带状态
-			this.lvdaiPosition -=1;
-			if(this.lvdaiPosition ==0)
-				this.lvdaiPosition =5;
+			this.lvdaiPosition -=2;
+			if(this.lvdaiPosition <0)
+				this.lvdaiPosition =6;
 			//更新子弹方向
 			this.ptDir = this.dir;
 		}
@@ -247,7 +246,7 @@ public class Tank {
 
 	//射击,用面向对象的思想，当坦克射击时会射出一个子弹
 	public Missile fire() {
-		Missile m =new Missile(cx, cy, this.ptDir, this.speedX+this.missileSpeed);//炮筒方向是哪个，子弹方向就是哪个
+		Missile m =new Missile(cx, cy, this.ptDir, this.speedX+this.missileSpeed,this.tc);//炮筒方向是哪个，子弹方向就是哪个
 		return m;
 	}
 }

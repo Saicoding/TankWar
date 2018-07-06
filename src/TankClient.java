@@ -29,9 +29,7 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	static boolean keyDownPressed = false;//设置默认按键状态
 	
 	Tank myTank = new Tank(50,50,5,this);//new出自己的坦克
-	
 
-	
 	List<Missile> missiles = new ArrayList<Missile>();//子弹容器
 	
 	Image offScreenImage = null;//声明一个虚拟图片，一次性展现，解决闪屏问题

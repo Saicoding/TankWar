@@ -15,17 +15,19 @@ public class Missile {
 	public int width = 10;
 	public int height = 10;
 	
-	int x, y;
-	Tank.Direction dir;
+	private boolean live = true;//一new出来肯定是活着的
 	
-	private boolean bLive = true;//一new出来肯定是活着的
+	int x, y;
+	
+	Tank.Direction dir;
 	
 	//随机产生颜色
 	int r = (int)(Math.random()*175);
 	int g = (int)(Math.random()*175);
 	int b = (int)(Math.random()*175);
-
-	Color color = new Color(r,g,b);
+	Color color = new Color(r,g,b);//子弹颜色
+	
+	private TankClient tc;//创建tc引用
 	
 	public Missile(int x, int y, Tank.Direction dir,int speed) {
 		this.x = x;
@@ -35,6 +37,11 @@ public class Missile {
 		this.dir = dir;
 	}
 	
+	public  Missile(int x ,int y, Tank.Direction dir ,int speed,TankClient tc) {
+		this(x,y,dir,speed);
+		this.tc = tc;
+	}
+	
 	public void draw(Graphics g) {
 		Color c = g.getColor();
 		g.setColor(this.color);
@@ -42,6 +49,11 @@ public class Missile {
 		g.setColor(c);
 		
 		move();
+	}
+	
+	//得到子弹是否活着的方法
+	public boolean isLive() {
+		return live;
 	}
 	
 	public void move() {
@@ -78,7 +90,12 @@ public class Missile {
 				x -= 0;
 				y -= 0;
 				break;
-		}	
+		}
+		//判断边界条件(粗略的,后期再优化)
+		if(x < 0 || y < 0 || x > TankClient.GAME_WIDTH || y > TankClient.GAME_HEIGHT) {
+			live = false;
+			tc.missiles.remove(this);//这里有tc引用会非常方便
+		}
 	}
 	
 }
