@@ -25,9 +25,27 @@ public class Tank {
 	private int lvdaiSpace = 6;//履带条纹间隙
 	private int fengxi = 1;//车身缝隙
 	
+	private Color color1;
+	private Color color2;
+	
+	{
+		//随机产生坦克颜色1
+		int r = (int)(Math.random()*175);
+		int g = (int)(Math.random()*175);
+		int b = (int)(Math.random()*175);
+		this.color1= new Color(r,g,b);//子弹颜色
+	}
+	
+	{
+		//随机产生坦克颜色2
+		int r = (int)(Math.random()*175);
+		int g = (int)(Math.random()*175);
+		int b = (int)(Math.random()*175);
+		this.color2= new Color(r,g,b);//子弹颜色
+	}
 	
 	
-	
+	private boolean good =false;//好坏坦克
 	private boolean bL = false,bR = false,bU = false,bD = false;//定义初始四个方向键按下状态
 	
 	TankClient tc;	//利用构造函数持有对象引用
@@ -37,16 +55,18 @@ public class Tank {
 	private Direction dir = Direction.STOP;//设置默认方向是停止状态
 	private Direction ptDir = Direction.D;//设置炮筒方向
 
-	public Tank(int x, int y, int speed) {
+	//好坏坦克用good区分
+	public Tank(int x, int y, boolean good,int speed) {
 		this.x = x;
 		this.y = y;
+		this.good =good;
 		this.speedX = speed;
 		this.speedY = speed;
 	}
 	
 	//利用构造函数持有对象引用
-	public Tank(int x,int y ,int speed,TankClient tc) {
-		this(x,y, speed);
+	public Tank(int x,int y ,boolean good ,int speed,TankClient tc) {
+		this(x,y,good, speed);
 		this.tc = tc;
 	}
 	
@@ -59,24 +79,28 @@ public class Tank {
 		int ph = th/2;
 
 		Graphics2D g2 = (Graphics2D) g;
-		g2.rotate(Math.toRadians(angel),cx,cy);
-		g2.setColor(new Color(178, 178, 0));
+		g2.rotate(Math.toRadians(angel),cx,cy);//以cx,cy为中心旋转画布
+		if(good) {
+			g2.setColor(new Color(178, 178, 0));//设置炮筒颜色
+		}else {
+			g2.setColor(this.color1);
+		}
 			
 		//画两个履带
 		g2.fillRect(cx-tw-mw/2, cy-th/2, tw, th);
 		g2.fillRect(cx+mw/2, cy-th/2, tw, th);
 
 		//画中间车身
-		g2.setColor(new Color(178, 178, 0));
 		g2.fillRect(cx-mw/2+fengxi, cy-mh/2, mw-2*fengxi, mh);
 		
 		//画炮筒
-		g2.setColor(new Color(255, 255, 0));//设置炮筒颜色
+		if(good) {
+			g2.setColor(new Color(255, 255, 0));//设置炮筒颜色
+		}else {
+			g2.setColor(this.color2);
+		}
 		g2.fillRect(cx-pw/2, cy-ph, pw, ph);
 		g2.fillOval(cx-mw/2+fengxi,cy-mw/2,mw-2,mw);
-		 
-//		g2.drawRect(cx-tw-mw/2, cy-th/2, tw, th);
-//		g2.drawRect(cx+mw/2, cy-th/2, tw, th);
 		
 		//画履带格子
 		for(int i = 0 ;this.lvdaiPosition+i*lvdaiSpace < th;i++) {
@@ -92,6 +116,7 @@ public class Tank {
 				g2.drawLine(cx+mw/2, cy-th/2+i*lvdaiSpace +this.lvdaiPosition, cx+mw/2+tw-fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition);
 			}
 		}
+		g2.rotate(Math.toRadians(-angel),cx,cy);//恢复旋转
 
 	}
 	//画坦克
