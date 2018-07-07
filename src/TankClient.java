@@ -52,6 +52,7 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 		//画子弹
 		for(int i = 0 ;i<missiles.size();i++) {
 			Missile m = missiles.get(i);
+			m.hitTank(enemyTank);
 			m.draw(g);
 		}
 		
@@ -133,8 +134,7 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 
 		@Override
 		public void keyPressed(KeyEvent e) {
-			myTank.keyPressed(e);
-			
+			myTank.keyPressed(e);			
 		}
 
 		@Override
