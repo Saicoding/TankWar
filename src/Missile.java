@@ -17,6 +17,8 @@ public class Missile {
 	public int width = 10;//子弹宽度
 	public int height = 10;//子弹高度
 	
+	private boolean good;
+	
 	private boolean live = true;//一new出来肯定是活着的
 	
 	public void setLive(boolean live) {
@@ -38,9 +40,10 @@ public class Missile {
 	/*
 	 * 构造方法
 	 */
-	public Missile(int x, int y, Tank.Direction dir,int speed) {
+	public Missile(int x, int y,boolean good, Tank.Direction dir,int speed) {
 		this.x = x;
 		this.y = y;
+		this.good = good;
 		this.speedX =speed;
 		this.speedY =speed;
 		this.dir = dir;
@@ -48,8 +51,8 @@ public class Missile {
 	/*
 	 * 带引用的构造方法
 	 */
-	public  Missile(int x ,int y, Tank.Direction dir ,int speed,TankClient tc) {
-		this(x,y,dir,speed);
+	public  Missile(int x ,int y,boolean good, Tank.Direction dir ,int speed,TankClient tc) {
+		this(x,y,good,dir,speed);
 		this.tc = tc;
 	}
 	
@@ -128,10 +131,10 @@ public class Missile {
 	}
 	
 	/*
-	 * 判断是否打中其中一辆坦克
+	 * 判断是否打中我的坦克
 	 */
-	public boolean hitTank(Tank t) {
-		if(this.getRect().intersects(t.getRect()) && t.isLive()) {
+	public boolean hitMyTank(Tank t) {
+		if(this.isLive() && this.getRect().intersects(t.getRect()) && t.isLive() && !t.isGood() == this.good) {//t.isGood() == this.good 判断是两个阵营的才打击
 			t.setLive(false);
 			this.setLive(false);
 			tc.booms.add(new Boom(t.getCX(),t.getCY(),tc));
@@ -144,11 +147,11 @@ public class Missile {
 	 * 判断是否打中所有坦克
 	 */
 	public boolean hitTanks(ArrayList<Tank> tanks) {
-		for(int i =0 ;i<tanks.size();i++) {
-			if(hitTank(tanks.get(i))) {
+		for(int j =0;j < tanks.size();j++) {
+			if(hitMyTank(tanks.get(j))) {
 				return true;
 			}
-		}
+		}	
 		return false;
 	}
 }

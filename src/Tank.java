@@ -7,6 +7,7 @@ import java.util.Random;
 
 public class Tank {
 	private int x , y;
+	private Color[] colors = new Color[2];//定义坦克颜色
 	private boolean live = true;
 	private int speedX;//x方向速度
 	private int speedY;//y方向速度	
@@ -31,9 +32,7 @@ public class Tank {
 	private int fengxi = 1;//车身缝隙
 	
 	private int step = 0;//计步数,控制坦克的转向随机
-
-	private Color color1 = new Color(random.nextInt(150),random.nextInt(150),random.nextInt(150));
-	private Color color2 = new Color(random.nextInt(150),random.nextInt(150),random.nextInt(150));
+	private int stepShot = 0;//射击计步
 	
 	private boolean good =false;//好坏坦克
 	private boolean bL = false,bR = false,bU = false,bD = false;//定义初始四个方向键按下状态
@@ -50,9 +49,10 @@ public class Tank {
 	/*
 	 * 构造函数
 	 */
-	public Tank(int x, int y, boolean good,int speed) {//好坏坦克用good区分
+	public Tank(int x, int y, Color[] colors,boolean good,int speed) {//好坏坦克用good区分
 		this.x = x;
 		this.y = y;
+		this.colors =colors;
 		this.good =good;
 		this.speedX = speed;
 		this.speedY = speed;
@@ -61,8 +61,8 @@ public class Tank {
 	/*
 	 * 利用构造函数持有对象引用
 	 */
-	public Tank(int x,int y ,boolean good ,Direction dir, int speed,TankClient tc) {
-		this(x,y,good, speed);
+	public Tank(int x,int y ,Color[] colors,boolean good ,Direction dir, int speed,TankClient tc) {
+		this(x,y,colors,good, speed);
 		this.tc = tc;
 		this.dir = dir;
 	}
@@ -80,11 +80,7 @@ public class Tank {
 
 		Graphics2D g2 = (Graphics2D) g;
 		g2.rotate(Math.toRadians(angel),cx,cy);//以cx,cy为中心旋转画布
-		if(good) {
-			g2.setColor(new Color(178, 178, 0));//设置炮筒颜色
-		}else {
-			g2.setColor(this.color1);
-		}
+		g2.setColor(colors[0]);//设置炮筒颜色
 			
 		//画两个履带
 		g2.fillRect(cx-tw-mw/2, cy-th/2, tw, th);
@@ -94,11 +90,8 @@ public class Tank {
 		g2.fillRect(cx-mw/2+fengxi, cy-mh/2, mw-2*fengxi, mh);
 		
 		//画炮筒
-		if(good) {
-			g2.setColor(new Color(255, 255, 0));//设置炮筒颜色
-		}else {
-			g2.setColor(this.color2);
-		}
+		g2.setColor(colors[1]);//设置炮筒颜色
+
 		g2.fillRect(cx-pw/2, cy-ph, pw, ph);
 		g2.fillOval(cx-mw/2+fengxi,cy-mw/2,mw-2,mw);
 		
@@ -181,62 +174,89 @@ public class Tank {
 	/*
 	 * 按键按下状态
 	 */
-	public void keyPressed(KeyEvent e) {
+	public void keyPressed(KeyEvent e,String p) {
+		if(!live)return;//如果死了就失效
 		int key = e.getKeyCode();
-		switch(key) {
+		if(p == "P1") {
+			switch(key) {
+				//如果按了ctrl键，就发射子弹，将坦克产生的子弹对象添加到tc.missiles中		
+				case KeyEvent.VK_G:	
+					tc.missiles.add(fire(5));
+					break;
+				case KeyEvent.VK_A:
+					bL = true;
+					break;
+				case KeyEvent.VK_D:	
+					bR = true;
+					break;
+				case KeyEvent.VK_W:		
+					bU = true;
+					break;
+				case KeyEvent.VK_S:	
+					bD = true;
+					break;
+			}
+		}else if(p =="P2") {
+			switch(key) {
 			//如果按了ctrl键，就发射子弹，将坦克产生的子弹对象添加到tc.missiles中
-//			case KeyEvent.VK_CONTROL:		
-//			case KeyEvent.VK_SPACE:	
-//				tc.missiles.add(fire());
-//				break;
-			case KeyEvent.VK_LEFT:
-			case KeyEvent.VK_J:
-				bL = true;
-				break;
-			case KeyEvent.VK_RIGHT:
-			case KeyEvent.VK_L:	
-				bR = true;
-				break;
-			case KeyEvent.VK_UP:
-			case KeyEvent.VK_I:		
-				bU = true;
-				break;
-			case KeyEvent.VK_DOWN:
-			case KeyEvent.VK_K:	
-				bD = true;
-				break;
+				case KeyEvent.VK_M:		
+				case KeyEvent.VK_SPACE:	
+					tc.missiles.add(fire(5));
+					break;
+				case KeyEvent.VK_LEFT:
+					bL = true;
+					break;
+				case KeyEvent.VK_RIGHT:
+					bR = true;
+					break;
+				case KeyEvent.VK_UP:
+					bU = true;
+					break;
+				case KeyEvent.VK_DOWN:
+					bD = true;
+					break;
+			}
 		}
+				
 		locateDirection();
 	}
 	
 	/*
 	 * 按键释放状态
 	 */
-	public void keyRelease(KeyEvent e) {
+	public void keyRelease(KeyEvent e,String p) {
 		int key = e.getKeyCode();
-		switch(key) {
-		//如果松开了ctrl键，就发射子弹，将坦克产生的子弹对象添加到tc.missiles中
-		case KeyEvent.VK_CONTROL:		
-		case KeyEvent.VK_SPACE:	
-			tc.missiles.add(fire());
-			break;
-		case KeyEvent.VK_LEFT:
-		case KeyEvent.VK_J:
-			bL = false;
-			break;
-		case KeyEvent.VK_RIGHT:
-		case KeyEvent.VK_L:	
-			bR = false;
-			break;
-		case KeyEvent.VK_UP:
-		case KeyEvent.VK_I:		
-			bU = false;
-			break;
-		case KeyEvent.VK_DOWN:
-		case KeyEvent.VK_K:	
-			bD = false;
-			break;
-		}
+		if(p == "P1") {//玩家1
+			switch(key) {
+				case KeyEvent.VK_A:
+					bL = false;
+					break;
+				case KeyEvent.VK_D:	
+					bR = false;
+					break;
+				case KeyEvent.VK_W:		
+					bU = false;
+					break;
+				case KeyEvent.VK_S:	
+					bD = false;
+					break;
+			}
+		}else if(p =="P2") {//玩家2
+			switch(key) {
+				case KeyEvent.VK_LEFT:
+					bL = false;
+					break;
+				case KeyEvent.VK_RIGHT:
+					bR = false;
+					break;
+				case KeyEvent.VK_UP:
+					bU = false;
+					break;
+				case KeyEvent.VK_DOWN:
+					bD = false;
+					break;
+			}
+		}			
 		locateDirection();
 
 	}		
@@ -303,6 +323,11 @@ public class Tank {
 				int rn = random.nextInt(dirs.length);//产生一个在length范围内的整数
 				dir = dirs[rn];
 			}
+			stepShot++;
+			if(stepShot >(random.nextInt(4000)+20)) {
+				tc.missiles.add(fire(2));
+				stepShot=0;
+			}
 		}
 	}
 	
@@ -342,11 +367,15 @@ public class Tank {
 	/*
 	 * 射击,用面向对象的思想，当坦克射击时会射出一个子弹
 	 */
-	public Missile fire() {
-		Missile m =new Missile(cx, cy, this.ptDir, this.speedX+this.missileSpeed,this.tc);//炮筒方向是哪个，子弹方向就是哪个
+	public Missile fire(int speed) {
+		Missile m =new Missile(cx, cy, this.good,this.ptDir, speed,this.tc);//炮筒方向是哪个，子弹方向就是哪个
 		return m;
 	}
 	
+	public boolean isGood() {
+		return good;
+	}
+
 	/*
 	 * 得到正好包含坦克的一个矩形对象(用来检测碰撞)
 	 */

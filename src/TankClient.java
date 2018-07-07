@@ -11,7 +11,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Random;
 
 public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方法，建议用这种方式
 
@@ -21,17 +21,22 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	public static final int GAME_POSITION_X= 100 ;//游戏屏幕位置x
 	public static final int GAME_POSITION_Y= 100 ;//游戏屏幕位置y
 	public static final Color FRONT_COLOR = new Color(51,51,51);//游戏前景色	
+	private static Random random = new Random();
 	
 	static boolean keyLeftPressed = false;//设置默认按键状态
 	static boolean keyRightPressed = false;//设置默认按键状态
 	static boolean keyUpPressed = false;//设置默认按键状态
 	static boolean keyDownPressed = false;//设置默认按键状态
 	
-	Tank myTank = new Tank(50,50,true,Tank.Direction.STOP,5,this);//new出自己的坦克
+	Color[] p1Color = {new Color(255,48,48),new Color(205,38,38)};//P1坦克颜色
+	Color[] p2Color = {new Color(255,255,0),new Color(255,255,0)};//P2坦克颜色
+	Color[][] myTankColors = {p1Color,p2Color};//颜色数组
 	
+	ArrayList<Tank> myTanks =new ArrayList<Tank>();//自己坦克数组
+	ArrayList<Tank> enemyTanks = new ArrayList<Tank>();
 	ArrayList<Boom> booms =new ArrayList<Boom>();//炸弹容器
 	ArrayList<Missile> missiles = new ArrayList<Missile>();//子弹容器
-	ArrayList<Tank> enemyTanks = new ArrayList<Tank>();
+	
 	
 	
 	Image offScreenImage = null;//声明一个虚拟图片，一次性展现，解决闪屏问题
@@ -55,6 +60,7 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 		for(int i = 0 ;i<missiles.size();i++) {
 			Missile m = missiles.get(i);
 			m.hitTanks(enemyTanks);
+			m.hitTanks(myTanks);
 			m.draw(g);
 		}
 		
@@ -73,7 +79,11 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 		}
 		
 		//画自己的坦克
-		myTank.draw(g);
+		for(int i = 0;i<myTanks.size();i++) {
+			Tank myTank =myTanks.get(i);
+			myTank.draw(g);
+		}
+		
 	}
 	
 	@Override
@@ -97,10 +107,17 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	 * 启动画布 
 	 */
 	public void launchFream() {
-		//添加坦克
-		for(int i=0;i<14;i++) {
-			for(int j = 0;j < 9;j++) {
-				enemyTanks.add(new Tank(50+90*(i+1),50+100*(j),false,Tank.Direction.D,5,this));
+		//添加自己坦克
+		for(int i=0;i<2;i++) {
+			myTanks.add(new Tank(90*(i+1),50,myTankColors[i],true,Tank.Direction.STOP,5,this));
+		}		
+		//添加敌人坦克
+		for(int i=0;i<5;i++) {
+			for(int j = 0;j < 2;j++) {
+				Color c1 = new Color(random.nextInt(150),random.nextInt(150),random.nextInt(150));
+				Color c2 = new Color(random.nextInt(255),random.nextInt(255),random.nextInt(255));
+				Color[] colors = {c1,c2};
+				enemyTanks.add(new Tank(50+90*(i+1),50+100*(j),colors,false,Tank.Direction.D,5,this));
 			}
 		}
 		
@@ -152,12 +169,20 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 
 		@Override
 		public void keyPressed(KeyEvent e) {
-			myTank.keyPressed(e);			
+			for(int i=0;i<myTanks.size();i++) {
+				Tank myTank = myTanks.get(i);
+				if(i == 0) myTank.keyPressed(e,"P1");	
+				if(i == 1) myTank.keyPressed(e,"P2");			
+			}
 		}
 
 		@Override
 		public void keyReleased(KeyEvent e) {
-			myTank.keyRelease(e);
+			for(int i=0;i<myTanks.size();i++) {
+				Tank myTank = myTanks.get(i);
+				if(i == 0) myTank.keyRelease(e,"P1");	
+				if(i == 1) myTank.keyRelease(e,"P2");					
+			}		
 		}
 	}
 }
