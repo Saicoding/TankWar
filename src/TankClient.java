@@ -27,7 +27,7 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	static boolean keyUpPressed = false;//设置默认按键状态
 	static boolean keyDownPressed = false;//设置默认按键状态
 	
-	Tank myTank = new Tank(50,50,true,5,this);//new出自己的坦克
+	Tank myTank = new Tank(50,50,true,Tank.Direction.STOP,5,this);//new出自己的坦克
 	
 	ArrayList<Boom> booms =new ArrayList<Boom>();//炸弹容器
 	ArrayList<Missile> missiles = new ArrayList<Missile>();//子弹容器
@@ -49,7 +49,7 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	public void paint(Graphics g) {
 		//画数值
 		g.drawString("子弹数量:" + missiles.size(), 10, 50);//有多少炮弹在屏幕上
-		g.drawString("敌人数量:" + enemyTanks.size(), 10, 70);//有多少炮弹在屏幕上
+		g.drawString("敌人数量:" + enemyTanks.size(), 10, 70);//有多少敌人在屏幕上
 		
 		//画子弹
 		for(int i = 0 ;i<missiles.size();i++) {
@@ -98,8 +98,10 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	 */
 	public void launchFream() {
 		//添加坦克
-		for(int i=0;i<10;i++) {
-			enemyTanks.add(new Tank(50+90*(i+1),50,false,5,this));
+		for(int i=0;i<14;i++) {
+			for(int j = 0;j < 9;j++) {
+				enemyTanks.add(new Tank(50+90*(i+1),50+100*(j),false,Tank.Direction.D,5,this));
+			}
 		}
 		
 		 this.setLocation(GAME_POSITION_X,GAME_POSITION_Y);

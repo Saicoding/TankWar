@@ -3,6 +3,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
+import java.util.Random;
 
 public class Tank {
 	private int x , y;
@@ -17,8 +18,10 @@ public class Tank {
 	private int width = tw*2 +mw+2*this.fengxi;//坦克宽度
 	private int height = this.th;//坦克高度
 	
-	private int cx ;
-	private int cy ;
+	private int cx ;//坦克中心x
+	private int cy ;//坦克中心y
+	
+	private static Random random =new Random();//随机数产生器
 	
 	public int missileWidth = 10;//该坦克弹管宽度
 	public int missileHeight = 10;//该坦克弹管高度
@@ -26,26 +29,11 @@ public class Tank {
 	private int lvdaiPosition = 5;//履带位置
 	private int lvdaiSpace = 6;//履带条纹间隙
 	private int fengxi = 1;//车身缝隙
+	
+	private int step = 0;//计步数,控制坦克的转向随机
 
-	private Color color1;
-	private Color color2;
-	
-	{
-		//随机产生坦克颜色1
-		int r = (int)(Math.random()*175);
-		int g = (int)(Math.random()*175);
-		int b = (int)(Math.random()*175);
-		this.color1= new Color(r,g,b);//子弹颜色
-	}
-	
-	{
-		//随机产生坦克颜色2
-		int r = (int)(Math.random()*175);
-		int g = (int)(Math.random()*175);
-		int b = (int)(Math.random()*175);
-		this.color2= new Color(r,g,b);//子弹颜色
-	}
-	
+	private Color color1 = new Color(random.nextInt(150),random.nextInt(150),random.nextInt(150));
+	private Color color2 = new Color(random.nextInt(150),random.nextInt(150),random.nextInt(150));
 	
 	private boolean good =false;//好坏坦克
 	private boolean bL = false,bR = false,bU = false,bD = false;//定义初始四个方向键按下状态
@@ -55,7 +43,9 @@ public class Tank {
 	enum Direction {L,R,U,D,LD,DR,RU,UL,STOP};//枚举9个方向，其中STOP是停止状态
 	
 	private Direction dir = Direction.STOP;//设置默认方向是停止状态
+	Direction[] dirs = Direction.values();//将枚举类型转为数组
 	private Direction ptDir = Direction.D;//设置炮筒方向
+	
 
 	/*
 	 * 构造函数
@@ -71,9 +61,10 @@ public class Tank {
 	/*
 	 * 利用构造函数持有对象引用
 	 */
-	public Tank(int x,int y ,boolean good ,int speed,TankClient tc) {
+	public Tank(int x,int y ,boolean good ,Direction dir, int speed,TankClient tc) {
 		this(x,y,good, speed);
 		this.tc = tc;
+		this.dir = dir;
 	}
 	
 	/*
@@ -304,6 +295,15 @@ public class Tank {
 		if(y < 30) y = 30;
 		if(x + width > TankClient.GAME_WIDTH-20) x = TankClient.GAME_WIDTH - width-20;
 		if(y + height > TankClient.GAME_HEIGHT) y = TankClient.GAME_HEIGHT - height;
+		
+		if(!good) {
+			step++;
+			if(step > (random.nextInt(800)+50)){
+				step = 0;
+				int rn = random.nextInt(dirs.length);//产生一个在length范围内的整数
+				dir = dirs[rn];
+			}
+		}
 	}
 	
 	/*
