@@ -12,6 +12,9 @@ public class Tank {
 	private int th = 80;//履带高度
 	private int mw = 30;//中断宽度
 	private int mh = 60;//中间高度
+	private int width = tw*2 +mw+2*this.fengxi;//坦克宽度
+	private int height = this.th;//坦克高度
+	
 	private int cx ;
 	private int cy ;
 	
@@ -21,6 +24,8 @@ public class Tank {
 	private int lvdaiPosition = 5;//履带位置
 	private int lvdaiSpace = 6;//履带条纹间隙
 	private int fengxi = 1;//车身缝隙
+	
+	
 	
 	
 	private boolean bL = false,bR = false,bU = false,bD = false;//定义初始四个方向键按下状态
@@ -231,6 +236,12 @@ public class Tank {
 			//更新子弹方向
 			this.ptDir = this.dir;
 		}
+		
+		//坦克边界判断
+		if(x < 20) x = 20;
+		if(y < 30) y = 30;
+		if(x + width > TankClient.GAME_WIDTH-20) x = TankClient.GAME_WIDTH - width-20;
+		if(y + height > TankClient.GAME_HEIGHT) y = TankClient.GAME_HEIGHT - height;
 	}
 	
 	//确定坦克方向dir
