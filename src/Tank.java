@@ -22,6 +22,7 @@ public class Tank {
 	private int lvdaiSpace = 6;//履带条纹间隙
 	private int fengxi = 1;//车身缝隙
 	
+	
 	private boolean bL = false,bR = false,bU = false,bD = false;//定义初始四个方向键按下状态
 	
 	TankClient tc;	//利用构造函数持有对象引用
@@ -29,7 +30,7 @@ public class Tank {
 	enum Direction {L,R,U,D,LD,DR,RU,UL,STOP};//枚举9个方向，其中STOP是停止状态
 	
 	private Direction dir = Direction.STOP;//设置默认方向是停止状态
-	private Direction ptDir = Direction.D;
+	private Direction ptDir = Direction.D;//设置炮筒方向
 
 	public Tank(int x, int y, int speed) {
 		this.x = x;
@@ -74,7 +75,7 @@ public class Tank {
 		
 		//画履带格子
 		for(int i = 0 ;this.lvdaiPosition+i*lvdaiSpace < th;i++) {
-			//做修正
+			//做修正(旋转画布因为不对称,因为画布不支持double类型,只能用int类型,产生像素取舍问题
 			if(ptDir == Direction.D || ptDir == Direction.L) {
 				g2.drawLine(cx-tw-mw/2+fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition, cx-mw/2, cy-th/2+i*lvdaiSpace +this.lvdaiPosition);
 				g2.drawLine(cx+mw/2+fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition, cx+mw/2+tw, cy-th/2+i*lvdaiSpace +this.lvdaiPosition);
@@ -181,6 +182,7 @@ public class Tank {
 			break;
 		}
 		locateDirection();
+
 	}		
 	
 	//坦克移动方法
@@ -232,16 +234,34 @@ public class Tank {
 	}
 	
 	//确定坦克方向dir
-	private void locateDirection() {
-		if(bL && !bU && !bR && !bD) dir =Direction.L;
-		else if(!bL && !bU && bR && !bD) dir =Direction.R;
-		else if(!bL && bU && !bR && !bD) dir =Direction.U;
-		else if(!bL && !bU && !bR && bD) dir =Direction.D;		
-		else if(bL && !bU && !bR && bD) dir =Direction.LD;
-		else if(!bL && !bU && bR && bD) dir =Direction.DR;
-		else if(!bL && bU && bR && !bD) dir =Direction.RU;
-		else if(bL && bU && !bR && !bD) dir =Direction.UL;
-		else if(!bL && !bU && !bR && !bD) dir =Direction.STOP;
+	private void locateDirection() {		
+		if(bL && !bU && !bR && !bD) {
+			dir =Direction.L;
+		}
+		else if(!bL && !bU && bR && !bD) {
+			dir =Direction.R;
+		}
+		else if(!bL && bU && !bR && !bD) {
+			dir =Direction.U;
+		}
+		else if(!bL && !bU && !bR && bD) {
+			dir =Direction.D;	
+		}
+		else if(bL && !bU && !bR && bD) {
+			dir =Direction.LD;
+		}
+		else if(!bL && !bU && bR && bD) {
+			dir =Direction.DR;
+		}
+		else if(!bL && bU && bR && !bD) {
+			dir =Direction.RU;
+		}
+		else if(bL && bU && !bR && !bD) {
+			dir =Direction.UL;
+		}
+		else if(!bL && !bU && !bR && !bD) {
+			dir =Direction.STOP;
+		}
 	}
 
 	//射击,用面向对象的思想，当坦克射击时会射出一个子弹
