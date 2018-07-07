@@ -5,7 +5,6 @@
 import java.awt.Color;
 import java.awt.Frame;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -29,9 +28,11 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	static boolean keyDownPressed = false;//设置默认按键状态
 	
 	Tank myTank = new Tank(50,50,true,5,this);//new出自己的坦克
-	Tank enemyTank = new Tank(200,50,false,5,this);
-
-	List<Missile> missiles = new ArrayList<Missile>();//子弹容器
+	
+	ArrayList<Boom> booms =new ArrayList<Boom>();//炸弹容器
+	ArrayList<Missile> missiles = new ArrayList<Missile>();//子弹容器
+	ArrayList<Tank> enemyTanks = new ArrayList<Tank>();
+	
 	
 	Image offScreenImage = null;//声明一个虚拟图片，一次性展现，解决闪屏问题
 	
@@ -47,22 +48,32 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	@Override
 	public void paint(Graphics g) {
 		//画数值
-		g.drawString("missiles count:" + missiles.size(), 10, 50);
+		g.drawString("子弹数量:" + missiles.size(), 10, 50);//有多少炮弹在屏幕上
+		g.drawString("敌人数量:" + enemyTanks.size(), 10, 70);//有多少炮弹在屏幕上
 		
 		//画子弹
 		for(int i = 0 ;i<missiles.size();i++) {
 			Missile m = missiles.get(i);
-			m.hitTank(enemyTank);
+			m.hitTanks(enemyTanks);
 			m.draw(g);
+		}
+		
+		//画敌人的坦克
+		for(int i = 0;i<enemyTanks.size();i++) {
+			Tank enemyTank =enemyTanks.get(i);
+			enemyTank.draw(g);
+		}
+		
+		//画炸弹
+		if(booms.size()>0) {
+			for(int i =0;i<booms.size();i++) {
+				Boom b = booms.get(i);
+				b.draw(g);
+			}
 		}
 		
 		//画自己的坦克
 		myTank.draw(g);
-		
-		//画敌人的坦克
-		enemyTank.draw(g);
-		
-
 	}
 	
 	@Override
@@ -86,6 +97,11 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	 * 启动画布 
 	 */
 	public void launchFream() {
+		//添加坦克
+		for(int i=0;i<10;i++) {
+			enemyTanks.add(new Tank(50+90*(i+1),50,false,5,this));
+		}
+		
 		 this.setLocation(GAME_POSITION_X,GAME_POSITION_Y);
 		 this.setSize(GAME_WIDTH,GAME_HEIGHT);
 		 

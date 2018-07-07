@@ -1,10 +1,12 @@
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
 
 public class Tank {
 	private int x , y;
+	private boolean live = true;
 	private int speedX;//x方向速度
 	private int speedY;//y方向速度	
 	
@@ -24,7 +26,7 @@ public class Tank {
 	private int lvdaiPosition = 5;//履带位置
 	private int lvdaiSpace = 6;//履带条纹间隙
 	private int fengxi = 1;//车身缝隙
-	
+
 	private Color color1;
 	private Color color2;
 	
@@ -55,8 +57,10 @@ public class Tank {
 	private Direction dir = Direction.STOP;//设置默认方向是停止状态
 	private Direction ptDir = Direction.D;//设置炮筒方向
 
-	//好坏坦克用good区分
-	public Tank(int x, int y, boolean good,int speed) {
+	/*
+	 * 构造函数
+	 */
+	public Tank(int x, int y, boolean good,int speed) {//好坏坦克用good区分
 		this.x = x;
 		this.y = y;
 		this.good =good;
@@ -64,12 +68,17 @@ public class Tank {
 		this.speedY = speed;
 	}
 	
-	//利用构造函数持有对象引用
+	/*
+	 * 利用构造函数持有对象引用
+	 */
 	public Tank(int x,int y ,boolean good ,int speed,TankClient tc) {
 		this(x,y,good, speed);
 		this.tc = tc;
 	}
 	
+	/*
+	 * 坦克模型
+	 */
 	public void tankModal(Graphics g,int angel) {
 
 		this.cx = x + tw+mw/2;//中心x坐标
@@ -119,8 +128,18 @@ public class Tank {
 		g2.rotate(Math.toRadians(-angel),cx,cy);//恢复旋转
 
 	}
-	//画坦克
+	/*
+	 * 画坦克
+	 */
 	public void draw(Graphics g) {
+		if(!live) {//如果坦克死了,就不画
+			if(!good) {
+				tc.enemyTanks.remove(this);
+				return;
+			}else {
+				return;
+			}
+		}
 		this.cx = this.x+ tw+mw/2;;//中心x坐标
 		this.cy = this.y;//中心y坐标
 		switch(this.ptDir) {
@@ -155,8 +174,22 @@ public class Tank {
 
 		move();
 	}
+	/*
+	 * 得到坦克中心x
+	 */
+	public int getCX() {
+		return this.cx;
+	}
+	/*
+	 * 得到坦克中心y
+	 */
+	public int getCY() {
+		return this.cy;
+	}
 
-	//按键按下状态
+	/*
+	 * 按键按下状态
+	 */
 	public void keyPressed(KeyEvent e) {
 		int key = e.getKeyCode();
 		switch(key) {
@@ -185,7 +218,9 @@ public class Tank {
 		locateDirection();
 	}
 	
-	//按键释放状态
+	/*
+	 * 按键释放状态
+	 */
 	public void keyRelease(KeyEvent e) {
 		int key = e.getKeyCode();
 		switch(key) {
@@ -215,7 +250,9 @@ public class Tank {
 
 	}		
 	
-	//坦克移动方法
+	/*
+	 * 坦克移动方法
+	 */
 	public void move() {
 		switch(dir) {
 			case L :
@@ -269,7 +306,9 @@ public class Tank {
 		if(y + height > TankClient.GAME_HEIGHT) y = TankClient.GAME_HEIGHT - height;
 	}
 	
-	//确定坦克方向dir
+	/*
+	 * 确定坦克方向dir
+	 */
 	private void locateDirection() {		
 		if(bL && !bU && !bR && !bD) {
 			dir =Direction.L;
@@ -300,9 +339,31 @@ public class Tank {
 		}
 	}
 
-	//射击,用面向对象的思想，当坦克射击时会射出一个子弹
+	/*
+	 * 射击,用面向对象的思想，当坦克射击时会射出一个子弹
+	 */
 	public Missile fire() {
 		Missile m =new Missile(cx, cy, this.ptDir, this.speedX+this.missileSpeed,this.tc);//炮筒方向是哪个，子弹方向就是哪个
 		return m;
+	}
+	
+	/*
+	 * 得到正好包含坦克的一个矩形对象(用来检测碰撞)
+	 */
+	public Rectangle getRect() {
+		return new Rectangle(x,y,width,height);
+	}
+	
+	/*
+	 * 得到是否活着
+	 */
+	public boolean isLive() {
+		return live;
+	}
+	/*
+	 * 设置生死
+	 */
+	public void setLive(boolean live) {
+		this.live = live;
 	}
 }
