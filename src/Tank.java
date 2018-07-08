@@ -189,7 +189,7 @@ public class Tank {
 			switch(key) {
 				//如果按了ctrl键，就发射子弹，将坦克产生的子弹对象添加到tc.missiles中		
 				case KeyEvent.VK_G:	
-					tc.missiles.add(fire(myTankShotSpeend,200));
+					tc.missiles.add(fire(myTankShotSpeend,30));
 					break;
 				case KeyEvent.VK_A:
 					bL = true;
@@ -209,7 +209,7 @@ public class Tank {
 			//如果按了ctrl键，就发射子弹，将坦克产生的子弹对象添加到tc.missiles中
 				case KeyEvent.VK_M:		
 				case KeyEvent.VK_SPACE:	
-					tc.missiles.add(fire(myTankShotSpeend,200));
+					tc.missiles.add(fire(myTankShotSpeend,30));
 					break;
 				case KeyEvent.VK_LEFT:
 					bL = true;
@@ -421,18 +421,72 @@ public class Tank {
 		this.live = live;
 	}
 	/*
+	 * 得到碰撞后stay后如果还是碰撞状态,需要移动的距离x
+	 */
+	public int getMoveX(Wall w) {
+		if(w.getCx()<cx) {
+			if(ptDir == Direction.L || ptDir == Direction.R) {
+				return (w.getCx()+w.getW()/2)-(cx-height/2);				
+			}else if(ptDir == Direction.U || ptDir == Direction.D) {
+				return (w.getCx()+w.getW()/2)-(cx-width/2);
+			}
+		}else if(w.getCx()>cx) {
+			if(ptDir == Direction.L || ptDir == Direction.R) {
+				return (w.getCx()-w.getW()/2)-(cx+height/2);
+			}else if(ptDir == Direction.U || ptDir == Direction.D) {
+				return (w.getCx()-w.getW()/2)-(cx+width/2);
+			}
+		}
+		return 0;
+	}
+	/*
+	 * 得到碰撞后stay后如果还是碰撞状态,需要移动的距离y
+	 */
+	public int getMoveY(Wall w) {
+		if(w.getCy()<cy) {
+			if(ptDir == Direction.L || ptDir == Direction.R) {
+				return (w.getCy()+w.getH()/2)-(cy-width/2);				
+			}else if(ptDir == Direction.U || ptDir == Direction.D) {
+				
+				return (w.getCy()+w.getH()/2)-(cy-height/2);
+			}
+		}else if(w.getCy()>cy) {
+			if(ptDir == Direction.L || ptDir == Direction.R) {
+				return (w.getCy()-w.getH()/2)-(cy+width/2);
+			}else if(ptDir == Direction.U || ptDir == Direction.D) {
+				return (w.getCy()-w.getH()/2)-(cy+height/2);
+			}
+		}
+		return 0;
+	}
+	/*
 	 * 判断与墙相撞
 	 */
 	public boolean collidesWithWall(Wall w) {
-		System.out.println("ok");
 		if(this.live && this.getRect().intersects(w.getRect())) {
-			System.out.println((ptDir == Direction.R)+"||"+(cx >w.getCx()));
-			if(ptDir == Direction.R && cx >w.getCx()) {
-				x+=10;
-				System.out.println(x);
+			this.stay();
+			if(this.getRect().intersects(w.getRect())) {
+				System.out.println(getMoveX(w)+"||"+getMoveY(w));
+				if(Math.abs(getMoveX(w))>Math.abs(getMoveY(w))) {
+					y=y+getMoveY(w);
+				}else {
+					x=x+getMoveX(w);				
+				}
 			}
+			
+//			if(ptDir == Direction.R && cx >w.getCx()) {
+//				x+=this.speedX;
+//			}else if(ptDir == Direction.L && cx <w.getCx()){
+//				x-=this.speedX;
+//			}else if(ptDir == Direction.U && cy <w.getCy() ) {
+//				y-=this.speedY;
+//			}else if(ptDir == Direction.D && cy >w.getCy() ) {
+//				y+=this.speedY;
+//			}
+				
+			
 			//撞墙后就回到原来的位置
-//			this.stay();
+			
 			return true;
 		}
 		return false;
