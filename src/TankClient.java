@@ -197,7 +197,7 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	 */
 	private class KeyMonitor extends KeyAdapter{//这里选择继承的原因是，如果选择implements 就要实现这个接口里的所有方法
 		//设置按键状态
-
+	
 		@Override
 		public void keyPressed(KeyEvent e) {
 			for(int i=0;i<myTanks.size();i++) {

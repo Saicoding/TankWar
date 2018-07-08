@@ -238,7 +238,9 @@ public class Tank {
 		int key = e.getKeyCode();
 		if(p == "P1") {
 			switch(key) {
-				//如果按了ctrl键，就发射子弹，将坦克产生的子弹对象添加到tc.missiles中		
+				//如果按了ctrl键，就发射子弹，将坦克产生的子弹对象添加到tc.missiles中
+				case KeyEvent.VK_F:	
+					superFire();
 				case KeyEvent.VK_G:	
 					tc.missiles.add(fire(myTankShotSpeend,myMissileSize));
 					break;
@@ -258,7 +260,9 @@ public class Tank {
 		}else if(p =="P2") {
 			switch(key) {
 			//如果按了ctrl键，就发射子弹，将坦克产生的子弹对象添加到tc.missiles中
-				case KeyEvent.VK_M:		
+				case KeyEvent.VK_M:	
+					superFire();
+					break;
 				case KeyEvent.VK_SPACE:	
 					tc.missiles.add(fire(myTankShotSpeend,myMissileSize));
 					break;
@@ -436,6 +440,24 @@ public class Tank {
 	public Missile fire(int speed,int width) {
 		Missile m =new Missile(cx, cy, this.good,this.ptDir, speed,width,this.tc);//炮筒方向是哪个，子弹方向就是哪个
 		return m;
+	}
+	
+	/*
+	 * 重载fire方法
+	 */
+	public Missile fire(int speed,int width,Direction dir) {
+		Missile m =new Missile(cx, cy, this.good,dir, speed,width,this.tc);//炮筒方向是哪个，子弹方向就是哪个
+		return m;
+	}
+	/*
+	 * 超级炮弹
+	 */
+	public void superFire() {
+		Direction[] dirs =Direction.values();
+		for(int i=0 ;i<dirs.length-1 ;i++) {
+			Missile m = fire(2,100,dirs[i]);
+			tc.missiles.add(m);
+		}		
 	}
 
 	/*
