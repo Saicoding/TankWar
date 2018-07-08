@@ -122,11 +122,20 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	public void launchFream() {
 		//添加自己坦克
 		for(int i=0;i<2;i++) {
-			myTanks.add(new Tank(90*(i+1),50,myTankColors[i],true,Tank.Direction.STOP,7,this));
+			//设置名字
+			String name = "";
+			if(i == 0) {
+				name = "冶";
+			}else if(i ==1) {
+				name ="陶";
+			}
+			Tank t = new Tank(90*(i+1),50,myTankColors[i],true,Tank.Direction.STOP,7,this);
+			t.setName(name);
+			myTanks.add(t);
 		}		
 		//添加敌人坦克
 		for(int i=0;i<10;i++) {
-			for(int j = 0;j < 3;j++) {
+			for(int j = 0;j < 2;j++) {
 				Color c1 = new Color(random.nextInt(150),random.nextInt(150),random.nextInt(150));
 				Color c2 = new Color(random.nextInt(255),random.nextInt(255),random.nextInt(255));
 				Color[] colors = {c1,c2};

@@ -1,4 +1,5 @@
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
@@ -7,8 +8,14 @@ import java.util.Random;
 
 public class Tank {
 	private int x , y;
-	private int lastX,lastY;
+	private int lastX,lastY,lastCX,lastCY;//上一次的坐标
+	
 	private Color[] colors = new Color[2];//定义坦克颜色
+	private String name;
+	
+	public void setName(String name) {
+		this.name = name;
+	}
 	private boolean live = true;
 	private int speedX;//x方向速度
 	private int speedY;//y方向速度	
@@ -35,7 +42,8 @@ public class Tank {
 	private int step = 0;//计步数,控制坦克的转向随机
 	private int stepShot = 0;//射击计步
 	
-	private int myTankShotSpeend =15;
+	private int myTankShotSpeend =15;//我的坦克射击速度
+	private int myMissileSize = 40;//我的坦克子弹大小
 	
 	private boolean good =false;//好坏坦克
 	private boolean bL = false,bR = false,bU = false,bD = false;//定义初始四个方向键按下状态
@@ -47,6 +55,7 @@ public class Tank {
 	private Direction dir = Direction.STOP;//设置默认方向是停止状态
 	Direction[] dirs = Direction.values();//将枚举类型转为数组
 	private Direction ptDir = Direction.D;//设置炮筒方向
+	
 	
 
 	/*
@@ -113,6 +122,15 @@ public class Tank {
 			}
 		}
 		g2.rotate(Math.toRadians(-angel),cx,cy);//恢复旋转
+		if(good) {
+			Font f=new Font("宋体",1,19);
+			g2.setFont(f);
+			Color c = g2.getColor();
+			g2.setColor(new Color(random.nextInt(150),random.nextInt(150),random.nextInt(150)));
+			g2.drawString(this.name, cx-10, cy+8);
+			g2.setColor(c);
+		}
+		
 
 	}
 	/*
@@ -127,8 +145,8 @@ public class Tank {
 				return;
 			}
 		}
-		this.cx = this.x+ tw+mw/2;;//中心x坐标
-		this.cy = this.y;//中心y坐标
+		this.cx = this.x+ tw+mw/2;//中心x坐标
+		this.cy = this.y+th/2;//中心y坐标
 		switch(this.ptDir) {
 			case L :
 				tankModal(g,-90);
@@ -174,10 +192,6 @@ public class Tank {
 		return this.cy;
 	}
 	
-	private void stay() {
-		x = lastX;
-		y = lastY;
-	}
 
 	/*
 	 * 按键按下状态
@@ -189,7 +203,7 @@ public class Tank {
 			switch(key) {
 				//如果按了ctrl键，就发射子弹，将坦克产生的子弹对象添加到tc.missiles中		
 				case KeyEvent.VK_G:	
-					tc.missiles.add(fire(myTankShotSpeend,30));
+					tc.missiles.add(fire(myTankShotSpeend,myMissileSize));
 					break;
 				case KeyEvent.VK_A:
 					bL = true;
@@ -209,7 +223,7 @@ public class Tank {
 			//如果按了ctrl键，就发射子弹，将坦克产生的子弹对象添加到tc.missiles中
 				case KeyEvent.VK_M:		
 				case KeyEvent.VK_SPACE:	
-					tc.missiles.add(fire(myTankShotSpeend,30));
+					tc.missiles.add(fire(myTankShotSpeend,myMissileSize));
 					break;
 				case KeyEvent.VK_LEFT:
 					bL = true;
@@ -274,8 +288,12 @@ public class Tank {
 	 */
 	public void move() {
 		//每移动一次就记录一下位置
+		this.cx = x + tw+mw/2;//中心x坐标
+		this.cy = y + th/2;//中心y坐标
 		this.lastX = x;
 		this.lastY = y;
+		this.lastCX = cx;
+		this.lastCY = cy;
 		switch(dir) {
 			case L :
 				x -=speedX;
@@ -387,26 +405,6 @@ public class Tank {
 		return good;
 	}
 	
-	public void drawRect(Graphics g) {
-		if(this.ptDir == Direction.U || this.ptDir == Direction.D) {
-			g.drawRect(cx-width/2,cy-height/2,width,height);
-		}else if(this.ptDir == Direction.L || this.ptDir == Direction.R){
-			g.drawRect(cx-height/2,cy-width/2,height,width);
-		};
-	}
-
-	/*
-	 * 得到正好包含坦克的一个矩形对象(用来检测碰撞)
-	 */
-	public Rectangle getRect() {
-		if(this.ptDir == Direction.U || this.ptDir == Direction.D) {
-			return new Rectangle(cx-width/2,cy-height/2,width,height);
-		}else if(this.ptDir == Direction.L || this.ptDir == Direction.R){
-			return new Rectangle(cx-height/2,cy-width/2,height,width);
-		}
-		return new Rectangle(cx-height/2,cy-width/2,height,width);
-		
-	}
 	
 	/*
 	 * 得到是否活着
@@ -447,7 +445,7 @@ public class Tank {
 			if(ptDir == Direction.L || ptDir == Direction.R) {
 				return (w.getCy()+w.getH()/2)-(cy-width/2);				
 			}else if(ptDir == Direction.U || ptDir == Direction.D) {
-				
+				System.out.println((w.getCy()+w.getH()/2)-(cy-height/2));
 				return (w.getCy()+w.getH()/2)-(cy-height/2);
 			}
 		}else if(w.getCy()>cy) {
@@ -460,33 +458,55 @@ public class Tank {
 		return 0;
 	}
 	/*
+	 * 让坦克回到上一次的位置
+	 */
+	private void stay() {
+		x = lastX;
+		y = lastY;
+		this.cx = lastCX;//中心x坐标
+		this.cy = lastCY;//中心y坐标
+	}
+	public void drawRect(Graphics g) {
+		//时刻保持cx和cy的更新,因为cx和cy不会随着x,y的变化而变化
+		cx = this.x+ tw+mw/2;//中心x坐标
+		cy = this.y+th/2;//中心y坐标
+		if(this.ptDir == Direction.U || this.ptDir == Direction.D) {
+			g.drawRect(cx-width/2,cy-height/2,width,height);
+		}else if(this.ptDir == Direction.L || this.ptDir == Direction.R){
+			g.drawRect(cx-height/2,cy-width/2,height,width);
+		};
+	}
+	
+	/*
+	 * 得到正好包含坦克的一个矩形对象(用来检测碰撞)
+	 */
+	public Rectangle getRect() {
+		//时刻保持cx和cy的更新,因为cx和cy不会随着x,y的变化而变化
+		cx = this.x+ tw+mw/2;//中心x坐标
+		cy = this.y+th/2;//中心y坐标
+		if(this.ptDir == Direction.U || this.ptDir == Direction.D) {
+			return new Rectangle(cx-width/2,cy-height/2,width,height);
+		}else if(this.ptDir == Direction.L || this.ptDir == Direction.R){
+			return new Rectangle(cx-height/2,cy-width/2,height,width);
+		}
+		return new Rectangle(cx-height/2,cy-width/2,height,width);
+		
+	}
+	/*
 	 * 判断与墙相撞
 	 */
 	public boolean collidesWithWall(Wall w) {
+		//判断如果是碰撞状态,就恢复到上一次状态,如果此时还是碰撞状态,就根据方向来进行移动
 		if(this.live && this.getRect().intersects(w.getRect())) {
-			this.stay();
-			if(this.getRect().intersects(w.getRect())) {
-				System.out.println(getMoveX(w)+"||"+getMoveY(w));
+			this.stay();	
+			while(this.getRect().intersects(w.getRect())) {
+				System.out.println("ok1");	
 				if(Math.abs(getMoveX(w))>Math.abs(getMoveY(w))) {
 					y=y+getMoveY(w);
 				}else {
 					x=x+getMoveX(w);				
 				}
 			}
-			
-//			if(ptDir == Direction.R && cx >w.getCx()) {
-//				x+=this.speedX;
-//			}else if(ptDir == Direction.L && cx <w.getCx()){
-//				x-=this.speedX;
-//			}else if(ptDir == Direction.U && cy <w.getCy() ) {
-//				y-=this.speedY;
-//			}else if(ptDir == Direction.D && cy >w.getCy() ) {
-//				y+=this.speedY;
-//			}
-				
-			
-			//撞墙后就回到原来的位置
-			
 			return true;
 		}
 		return false;
