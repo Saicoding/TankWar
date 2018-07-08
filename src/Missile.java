@@ -136,8 +136,11 @@ public class Missile {
 	 */
 	public boolean hitMyTank(Tank t) {
 		if(this.live && this.getRect().intersects(t.getRect()) && t.isLive()&& !t.isGood() == this.good) {
-			t.setLive(false);
-			//this.setLive(false);
+			t.setLife(t.getLife()-1);
+			if(t.getLife() <=0) {
+				t.setLive(false);
+			}	
+			if(!this.good)this.setLive(false);
 			tc.booms.add(new Boom(t.getCx(),t.getCy(),tc));
 			return true;
 		}

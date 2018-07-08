@@ -9,14 +9,19 @@ import java.util.Random;
 
 public class Tank {
 	private int x , y;
-	private int lastX,lastY,lastCX,lastCY;//上一次的坐标
+	private int lastX,lastY,lastCX,lastCY;//上一次的坐标和中心坐标
+	private int life = 0;//坦克生命值
+	private int fullLife = 10;//坦克最大生命值
+	
+	private BloodBar bb = new BloodBar();
 	
 	private Color[] colors = new Color[2];//定义坦克颜色
-	private String name;
+	private String name;//坦克名字
 	
 	public void setName(String name) {
 		this.name = name;
 	}
+	
 	private boolean live = true;
 	private int speedX;//x方向速度
 	private int speedY;//y方向速度	
@@ -70,6 +75,8 @@ public class Tank {
 		this.good = good;
 		this.speedX = speed;
 		this.speedY = speed;
+		if(good) this.life=10;//如果是友 生命初始是10
+		else this.life =1;//如果是敌人,生命初始是1
 	}
 	
 	/*
@@ -106,7 +113,15 @@ public class Tank {
 	public boolean isGood() {
 		return good;
 	}
+	
+	public int getLife() {
+		return life;
+	}
 		
+	public void setLife(int life) {
+		this.life = life;
+	}
+
 	/*
 	 * 设置生死
 	 */
@@ -180,8 +195,10 @@ public class Tank {
 				g2.drawString(this.name, cx-11, cy+8);
 			}
 		}		
-		g2.setColor(c);
-
+		g2.setColor(c);	
+		if(good) {
+			bb.draw(g2);
+		}
 	}
 	/*
 	 * 画坦克
@@ -192,6 +209,7 @@ public class Tank {
 				tc.enemyTanks.remove(this);
 				return;
 			}else {
+//				tc.myTanks.remove(this);
 				return;
 			}
 		}
@@ -283,7 +301,7 @@ public class Tank {
 				
 		locateDirection();
 	}
-	
+
 	/*
 	 * 按键释放状态
 	 */
@@ -628,4 +646,19 @@ public class Tank {
 			}	
 		}
 	}	
+	/*
+	 * 坦克血条内部类
+	 */
+	private class BloodBar{
+		public void draw(Graphics2D g2) {
+			Color c = g2.getColor();
+			g2.setColor(new Color(139,0,0));
+			if(life <=3) {//如果血量小于3了就开始闪
+				g2.setColor(new Color(random.nextInt(255),random.nextInt(255),random.nextInt(255)));
+			}
+			g2.drawRect(getCx()-height/2,getCy()-height/2-23, height,20 );
+			g2.fillRect(getCx()-height/2,getCy()-height/2-23, height/fullLife*life,20);
+			g2.setColor(c);
+		}
+	}
 }

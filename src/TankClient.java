@@ -60,7 +60,7 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 		for(int i = 0 ;i<missiles.size();i++) {
 			Missile m = missiles.get(i);
 			m.hitTanks(enemyTanks);//可以打敌人
-//			m.hitTanks(myTanks);//敌人可以打我的坦克
+			m.hitTanks(myTanks);//敌人可以打我的坦克
 			m.hitWall(w1);
 			m.hitWall(w2);
 			m.draw(g);
@@ -95,6 +95,11 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 		//画数值
 		g.drawString("子弹数量:" + missiles.size(), 10, 50);//有多少炮弹在屏幕上
 		g.drawString("敌人数量:" + enemyTanks.size(), 10, 70);//有多少敌人在屏幕上
+		for(int i=0 ;i<myTanks.size();i++) {
+			Tank myTank = myTanks.get(i);
+			g.drawString("生命值:" + myTank.getLife(), 10, 90+i*20);//有多少敌人在屏幕上
+		}
+		
 		
 		//画墙
 		w1.drawWallRect(g);
@@ -140,7 +145,7 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 		}		
 		//添加敌人坦克
 		for(int i=0;i<10;i++) {
-			for(int j = 0;j < 15;j++) {
+			for(int j = 0;j < 2;j++) {
 				Color c1 = new Color(random.nextInt(150),random.nextInt(150),random.nextInt(150));
 				Color c2 = new Color(random.nextInt(255),random.nextInt(255),random.nextInt(255));
 				Color[] colors = {c1,c2};
