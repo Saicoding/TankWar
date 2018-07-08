@@ -4,6 +4,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.Random;
 
 public class Tank {
@@ -35,6 +36,7 @@ public class Tank {
 	public int missileWidth = 10;//该坦克弹管宽度
 	public int missileHeight = 10;//该坦克弹管高度
 	public int missileSpeed = 5;//子弹比坦克快的数字
+
 	private int lvdaiPosition = 5;//履带位置
 	private int lvdaiSpace = 6;//履带条纹间隙
 	private int fengxi = 1;//车身缝隙
@@ -79,6 +81,45 @@ public class Tank {
 		this.dir = dir;
 	}
 	
+	public int getWidth() {
+		return width;
+	}
+
+	public int getHeight() {
+		return height;
+	}
+	/*
+	 * 得到坦克中心x
+	 */
+	public int getCx() {
+		cx = x + tw+mw/2;
+		return cx;
+	}
+	/*
+	 * 得到坦克中心y
+	 */
+	public int getCy() {
+		cy = y + th/2;
+		return cy;
+	}
+	
+	public boolean isGood() {
+		return good;
+	}
+		
+	/*
+	 * 设置生死
+	 */
+	public void setLive(boolean live) {
+		this.live = live;
+	}
+	/*
+	 * 得到是否活着
+	 */
+	public boolean isLive() {
+		return live;
+	}
+		
 	/*
 	 * 坦克模型
 	 */
@@ -122,15 +163,24 @@ public class Tank {
 			}
 		}
 		g2.rotate(Math.toRadians(-angel),cx,cy);//恢复旋转
-		if(good) {
-			Font f=new Font("宋体",1,19);
-			g2.setFont(f);
-			Color c = g2.getColor();
-			g2.setColor(new Color(random.nextInt(150),random.nextInt(150),random.nextInt(150)));
-			g2.drawString(this.name, cx-10, cy+8);
-			g2.setColor(c);
-		}
 		
+		//设置坦克上的数字
+		Font f=new Font("宋体",1,19);
+		g2.setFont(f);
+		Color c = g2.getColor();
+		if(good) {
+			g2.setColor(new Color(random.nextInt(150),random.nextInt(150),random.nextInt(150)));
+			g2.drawString(this.name, cx-11, cy+8);
+		}else {
+			g2.setColor(new Color(125,38,205));	
+			if(Integer.parseInt(this.name)<=9) {
+				g2.drawString(this.name, cx-6, cy+8);
+			}
+			else if(Integer.parseInt(this.name)>9) {
+				g2.drawString(this.name, cx-11, cy+8);
+			}
+		}		
+		g2.setColor(c);
 
 	}
 	/*
@@ -179,19 +229,6 @@ public class Tank {
 
 		move();
 	}
-	/*
-	 * 得到坦克中心x
-	 */
-	public int getCX() {
-		return this.cx;
-	}
-	/*
-	 * 得到坦克中心y
-	 */
-	public int getCY() {
-		return this.cy;
-	}
-	
 
 	/*
 	 * 按键按下状态
@@ -400,24 +437,7 @@ public class Tank {
 		Missile m =new Missile(cx, cy, this.good,this.ptDir, speed,width,this.tc);//炮筒方向是哪个，子弹方向就是哪个
 		return m;
 	}
-	
-	public boolean isGood() {
-		return good;
-	}
-	
-	
-	/*
-	 * 得到是否活着
-	 */
-	public boolean isLive() {
-		return live;
-	}
-	/*
-	 * 设置生死
-	 */
-	public void setLive(boolean live) {
-		this.live = live;
-	}
+
 	/*
 	 * 得到碰撞后stay后如果还是碰撞状态,需要移动的距离x
 	 */
@@ -435,7 +455,7 @@ public class Tank {
 				return (w.getCx()-w.getW()/2)-(cx+width/2);
 			}
 		}
-		return 0;
+		return 1;
 	}
 	/*
 	 * 得到碰撞后stay后如果还是碰撞状态,需要移动的距离y
@@ -445,7 +465,6 @@ public class Tank {
 			if(ptDir == Direction.L || ptDir == Direction.R) {
 				return (w.getCy()+w.getH()/2)-(cy-width/2);				
 			}else if(ptDir == Direction.U || ptDir == Direction.D) {
-				System.out.println((w.getCy()+w.getH()/2)-(cy-height/2));
 				return (w.getCy()+w.getH()/2)-(cy-height/2);
 			}
 		}else if(w.getCy()>cy) {
@@ -455,7 +474,46 @@ public class Tank {
 				return (w.getCy()-w.getH()/2)-(cy+height/2);
 			}
 		}
-		return 0;
+		return 1;
+	}
+	/*
+	 * 得到碰撞后stay后如果还是碰撞状态,需要移动的距离x
+	 */
+	public int getTankMoveX(Tank t) {
+		if(t.getCx()<this.getCx()) {
+			if(ptDir == Direction.L || ptDir == Direction.R) {
+				return (t.getCx()+t.getWidth()/2)-(this.getCx()-this.height/2);				
+			}else if(ptDir == Direction.U || ptDir == Direction.D) {
+				return (t.getCx()+t.getWidth()/2)-(this.getCx()-this.width/2);
+			}
+		}else if(t.getCx()>this.getCx()) {
+			if(ptDir == Direction.L || ptDir == Direction.R) {
+				return (t.getCx()-t.getWidth()/2)-(this.getCx()+this.height/2);
+			}else if(ptDir == Direction.U || ptDir == Direction.D) {
+				return (t.getCx()-t.getWidth()/2)-(this.getCx()+this.width/2);
+			}
+		}
+		return 1;
+	}
+	
+	/*
+	 * 得到坦克互相碰撞后stay后如果还是碰撞状态,需要移动的距离y
+	 */
+	public int getTankMoveY(Tank t) {
+		if(t.getCy()<cy) {
+			if(ptDir == Direction.L || ptDir == Direction.R) {
+				return (t.getCy()+t.getHeight()/2)-(this.getCy()-this.width/2);				
+			}else if(ptDir == Direction.U || ptDir == Direction.D) {
+				return (t.getCy()+t.getHeight()/2)-(this.getCy()-this.height/2);
+			}
+		}else if(t.getCy()>cy) {
+			if(ptDir == Direction.L || ptDir == Direction.R) {
+				return (t.getCy()-t.getHeight()/2)-(this.getCy()+this.width/2);
+			}else if(ptDir == Direction.U || ptDir == Direction.D) {
+				return (t.getCy()-t.getHeight()/2)-(this.getCy()+this.height/2);
+			}
+		}
+		return 1;
 	}
 	/*
 	 * 让坦克回到上一次的位置
@@ -489,9 +547,9 @@ public class Tank {
 		}else if(this.ptDir == Direction.L || this.ptDir == Direction.R){
 			return new Rectangle(cx-height/2,cy-width/2,height,width);
 		}
-		return new Rectangle(cx-height/2,cy-width/2,height,width);
-		
+		return new Rectangle(cx-height/2,cy-width/2,height,width);	
 	}
+	
 	/*
 	 * 判断与墙相撞
 	 */
@@ -502,13 +560,50 @@ public class Tank {
 			while(this.getRect().intersects(w.getRect())) {
 				System.out.println("ok1");	
 				if(Math.abs(getMoveX(w))>Math.abs(getMoveY(w))) {
-					y=y+getMoveY(w);
+					if(getMoveY(w)>0)y = y+1;
+					else if(getMoveY(w)<0) y =y-1;
+
 				}else {
-					x=x+getMoveX(w);				
+					if(getMoveX(w)>0)x = x+1;
+					else if(getMoveX(w)<0) x =x-1;				
 				}
 			}
 			return true;
 		}
 		return false;
 	}
+	/*
+	 * 判断单个坦克相撞
+	 */
+	private boolean collidesWithTank(Tank t) {
+		//判断如果是碰撞状态,就恢复到上一次状态	
+		if(this.live && this.getRect().intersects(t.getRect())) {
+			this.stay();	
+//			while(this.getRect().intersects(t.getRect())) {
+//				System.out.println("ok1");	
+//				if(Math.abs(getTankMoveX(t))>Math.abs(getTankMoveY(t))) {
+//					if(getTankMoveY(t)>0)y = y+1;
+//					else if(getTankMoveY(t)<0) y =y-1;
+//
+//				}else {
+//					if(getTankMoveX(t)>0)x = x+1;
+//					else if(getTankMoveX(t)<0) x =x-1;			
+//				}
+//			}
+			return true;
+		}
+		return false;
+	}
+	/*
+	 * 判断坦克之间相撞
+	 */
+	public void collidesWithTanks(ArrayList<Tank> tanks) {
+		//判断如果是碰撞状态,就恢复到上一次状态
+		for(int i = 0; i < tanks.size(); i++) {
+			Tank t = tanks.get(i);
+			if(this != t) {
+				collidesWithTank(t);
+			}	
+		}
+	}	
 }

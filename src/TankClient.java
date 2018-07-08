@@ -35,7 +35,8 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	Wall w1 = new Wall(300,200,20,150,this),w2 = new Wall(500,100,300,20,this);
 	
 	ArrayList<Tank> myTanks =new ArrayList<Tank>();//自己坦克数组
-	ArrayList<Tank> enemyTanks = new ArrayList<Tank>();
+	ArrayList<Tank> enemyTanks = new ArrayList<Tank>();//敌人坦克数组
+	
 	ArrayList<Boom> booms =new ArrayList<Boom>();//炸弹容器
 	ArrayList<Missile> missiles = new ArrayList<Missile>();//子弹容器
 	
@@ -69,6 +70,8 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 		for(int i = 0;i<enemyTanks.size();i++) {
 			Tank enemyTank =enemyTanks.get(i);
 			enemyTank.draw(g);
+			enemyTank.collidesWithTanks(myTanks);
+			enemyTank.collidesWithTanks(enemyTanks);
 		}
 		
 		//画炸弹
@@ -84,6 +87,8 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 			Tank myTank =myTanks.get(i);
 			myTank.collidesWithWall(w1);
 			myTank.collidesWithWall(w2);
+//			myTank.collidesWithTanks(myTanks);
+			myTank.collidesWithTanks(enemyTanks);
 			myTank.draw(g);
 			myTank.drawRect(g);
 		}
@@ -129,17 +134,21 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 			}else if(i ==1) {
 				name ="陶";
 			}
-			Tank t = new Tank(90*(i+1),50,myTankColors[i],true,Tank.Direction.STOP,7,this);
+			Tank t = new Tank(200*(i+1),150,myTankColors[i],true,Tank.Direction.STOP,7,this);
 			t.setName(name);
 			myTanks.add(t);
 		}		
 		//添加敌人坦克
 		for(int i=0;i<10;i++) {
-			for(int j = 0;j < 2;j++) {
+			for(int j = 0;j < 15;j++) {
 				Color c1 = new Color(random.nextInt(150),random.nextInt(150),random.nextInt(150));
 				Color c2 = new Color(random.nextInt(255),random.nextInt(255),random.nextInt(255));
 				Color[] colors = {c1,c2};
-				enemyTanks.add(new Tank(50+90*(i+1),50+100*(j),colors,false,Tank.Direction.D,5,this));
+				Tank et =new Tank(50+90*(i+1),50+100*(j),colors,false,Tank.Direction.D,5,this);
+				int num = i+j*10;
+				String name =num+"";
+				et.setName(name);
+				enemyTanks.add(et);
 			}
 		}
 		

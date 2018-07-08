@@ -138,7 +138,7 @@ public class Missile {
 		if(this.live && this.getRect().intersects(t.getRect()) && t.isLive()&& !t.isGood() == this.good) {
 			t.setLive(false);
 			//this.setLive(false);
-			tc.booms.add(new Boom(t.getCX(),t.getCY(),tc));
+			tc.booms.add(new Boom(t.getCx(),t.getCy(),tc));
 			return true;
 		}
 		return false;
