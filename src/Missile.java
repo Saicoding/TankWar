@@ -17,11 +17,11 @@ public class Missile {
 	public int width = 10;//子弹宽度
 	public int height = 10;//子弹高度
 	
-	private boolean good;
+	private boolean good;//子弹阵营
 	
 	private boolean live = true;//一new出来肯定是活着的
 	
-	public void setLive(boolean live) {
+	public void setLive(boolean live) {//设置子弹是否活着
 		this.live = live;
 	}
 
@@ -40,19 +40,20 @@ public class Missile {
 	/*
 	 * 构造方法
 	 */
-	public Missile(int x, int y,boolean good, Tank.Direction dir,int speed) {
+	public Missile(int x, int y,boolean good, Tank.Direction dir,int speed,int width) {
 		this.x = x;
 		this.y = y;
 		this.good = good;
 		this.speedX =speed;
 		this.speedY =speed;
+		this.width =width;
 		this.dir = dir;
 	}
 	/*
 	 * 带引用的构造方法
 	 */
-	public  Missile(int x ,int y,boolean good, Tank.Direction dir ,int speed,TankClient tc) {
-		this(x,y,good,dir,speed);
+	public  Missile(int x ,int y,boolean good, Tank.Direction dir ,int speed,int width,TankClient tc) {
+		this(x,y,good,dir,speed,width);
 		this.tc = tc;
 	}
 	
@@ -67,7 +68,7 @@ public class Missile {
 		}
 		Color c = g.getColor();
 		g.setColor(this.color);
-		g.fillOval(x-this.width/2, y-this.height/2, this.width, this.height);
+		g.fillOval(x-this.width/2, y-this.width/2, this.width, this.width);
 		g.setColor(c);
 		
 		move();
@@ -127,16 +128,16 @@ public class Missile {
 	 * 得到正好包含子弹的一个矩形对象(用来检测碰撞)
 	 */
 	public Rectangle getRect() {
-		return new Rectangle(x-width/2,y-height/2,width,height);//这里x,y是子弹的中心,所以要这样算矩形
+		return new Rectangle(x-width/2,y-width/2,width,width);//这里x,y是子弹的中心,所以要这样算矩形
 	}
 	
 	/*
 	 * 判断是否打中我的坦克
 	 */
 	public boolean hitMyTank(Tank t) {
-		if(this.isLive() && this.getRect().intersects(t.getRect()) && t.isLive() && !t.isGood() == this.good) {//t.isGood() == this.good 判断是两个阵营的才打击
+		if(this.live && this.getRect().intersects(t.getRect()) && t.isLive()&& !t.isGood() == this.good) {
 			t.setLive(false);
-			this.setLive(false);
+			//this.setLive(false);
 			tc.booms.add(new Boom(t.getCX(),t.getCY(),tc));
 			return true;
 		}
@@ -147,11 +148,22 @@ public class Missile {
 	 * 判断是否打中所有坦克
 	 */
 	public boolean hitTanks(ArrayList<Tank> tanks) {
-		for(int j =0;j < tanks.size();j++) {
-			if(hitMyTank(tanks.get(j))) {
-				return true;
-			}
-		}	
+			for(int j =0;j < tanks.size();j++) {
+				if(hitMyTank(tanks.get(j))) {
+					return true;
+				}
+			}	
+		return false;
+	}
+
+	/*
+	 * 判断是否打中墙
+	 */
+	public boolean hitWall(Wall w) {
+		if(this.live && this.getRect().intersects(w.getRect())) {
+			this.live =false;
+			return true;
+		}
 		return false;
 	}
 }

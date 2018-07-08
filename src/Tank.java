@@ -7,6 +7,7 @@ import java.util.Random;
 
 public class Tank {
 	private int x , y;
+	private int lastX,lastY;
 	private Color[] colors = new Color[2];//定义坦克颜色
 	private boolean live = true;
 	private int speedX;//x方向速度
@@ -34,6 +35,8 @@ public class Tank {
 	private int step = 0;//计步数,控制坦克的转向随机
 	private int stepShot = 0;//射击计步
 	
+	private int myTankShotSpeend =15;
+	
 	private boolean good =false;//好坏坦克
 	private boolean bL = false,bR = false,bU = false,bD = false;//定义初始四个方向键按下状态
 	
@@ -52,8 +55,8 @@ public class Tank {
 	public Tank(int x, int y, Color[] colors,boolean good,int speed) {//好坏坦克用good区分
 		this.x = x;
 		this.y = y;
-		this.colors =colors;
-		this.good =good;
+		this.colors = colors;
+		this.good = good;
 		this.speedX = speed;
 		this.speedY = speed;
 	}
@@ -170,6 +173,11 @@ public class Tank {
 	public int getCY() {
 		return this.cy;
 	}
+	
+	private void stay() {
+		x = lastX;
+		y = lastY;
+	}
 
 	/*
 	 * 按键按下状态
@@ -181,7 +189,7 @@ public class Tank {
 			switch(key) {
 				//如果按了ctrl键，就发射子弹，将坦克产生的子弹对象添加到tc.missiles中		
 				case KeyEvent.VK_G:	
-					tc.missiles.add(fire(5));
+					tc.missiles.add(fire(myTankShotSpeend,200));
 					break;
 				case KeyEvent.VK_A:
 					bL = true;
@@ -201,7 +209,7 @@ public class Tank {
 			//如果按了ctrl键，就发射子弹，将坦克产生的子弹对象添加到tc.missiles中
 				case KeyEvent.VK_M:		
 				case KeyEvent.VK_SPACE:	
-					tc.missiles.add(fire(5));
+					tc.missiles.add(fire(myTankShotSpeend,200));
 					break;
 				case KeyEvent.VK_LEFT:
 					bL = true;
@@ -265,6 +273,9 @@ public class Tank {
 	 * 坦克移动方法
 	 */
 	public void move() {
+		//每移动一次就记录一下位置
+		this.lastX = x;
+		this.lastY = y;
 		switch(dir) {
 			case L :
 				x -=speedX;
@@ -325,7 +336,7 @@ public class Tank {
 			}
 			stepShot++;
 			if(stepShot >(random.nextInt(4000)+20)) {
-				tc.missiles.add(fire(2));
+				tc.missiles.add(fire(2,10));
 				stepShot=0;
 			}
 		}
@@ -367,20 +378,34 @@ public class Tank {
 	/*
 	 * 射击,用面向对象的思想，当坦克射击时会射出一个子弹
 	 */
-	public Missile fire(int speed) {
-		Missile m =new Missile(cx, cy, this.good,this.ptDir, speed,this.tc);//炮筒方向是哪个，子弹方向就是哪个
+	public Missile fire(int speed,int width) {
+		Missile m =new Missile(cx, cy, this.good,this.ptDir, speed,width,this.tc);//炮筒方向是哪个，子弹方向就是哪个
 		return m;
 	}
 	
 	public boolean isGood() {
 		return good;
 	}
+	
+	public void drawRect(Graphics g) {
+		if(this.ptDir == Direction.U || this.ptDir == Direction.D) {
+			g.drawRect(cx-width/2,cy-height/2,width,height);
+		}else if(this.ptDir == Direction.L || this.ptDir == Direction.R){
+			g.drawRect(cx-height/2,cy-width/2,height,width);
+		};
+	}
 
 	/*
 	 * 得到正好包含坦克的一个矩形对象(用来检测碰撞)
 	 */
 	public Rectangle getRect() {
-		return new Rectangle(x,y,width,height);
+		if(this.ptDir == Direction.U || this.ptDir == Direction.D) {
+			return new Rectangle(cx-width/2,cy-height/2,width,height);
+		}else if(this.ptDir == Direction.L || this.ptDir == Direction.R){
+			return new Rectangle(cx-height/2,cy-width/2,height,width);
+		}
+		return new Rectangle(cx-height/2,cy-width/2,height,width);
+		
 	}
 	
 	/*
@@ -394,5 +419,22 @@ public class Tank {
 	 */
 	public void setLive(boolean live) {
 		this.live = live;
+	}
+	/*
+	 * 判断与墙相撞
+	 */
+	public boolean collidesWithWall(Wall w) {
+		System.out.println("ok");
+		if(this.live && this.getRect().intersects(w.getRect())) {
+			System.out.println((ptDir == Direction.R)+"||"+(cx >w.getCx()));
+			if(ptDir == Direction.R && cx >w.getCx()) {
+				x+=10;
+				System.out.println(x);
+			}
+			//撞墙后就回到原来的位置
+//			this.stay();
+			return true;
+		}
+		return false;
 	}
 }

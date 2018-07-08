@@ -29,8 +29,10 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	static boolean keyDownPressed = false;//设置默认按键状态
 	
 	Color[] p1Color = {new Color(255,48,48),new Color(205,38,38)};//P1坦克颜色
-	Color[] p2Color = {new Color(255,255,0),new Color(255,255,0)};//P2坦克颜色
+	Color[] p2Color = {new Color(255,255,0),new Color(0,255,0)};//P2坦克颜色
 	Color[][] myTankColors = {p1Color,p2Color};//颜色数组
+	
+	Wall w1 = new Wall(300,200,20,150,this),w2 = new Wall(500,100,300,20,this);
 	
 	ArrayList<Tank> myTanks =new ArrayList<Tank>();//自己坦克数组
 	ArrayList<Tank> enemyTanks = new ArrayList<Tank>();
@@ -46,21 +48,21 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	 */
 	public static void main(String[] args) {
 		TankClient tc = new TankClient();
+		System.out.println("ok");
 		tc.launchFream();
 	}
 	
 
 	@Override
 	public void paint(Graphics g) {
-		//画数值
-		g.drawString("子弹数量:" + missiles.size(), 10, 50);//有多少炮弹在屏幕上
-		g.drawString("敌人数量:" + enemyTanks.size(), 10, 70);//有多少敌人在屏幕上
 		
 		//画子弹
 		for(int i = 0 ;i<missiles.size();i++) {
 			Missile m = missiles.get(i);
-			m.hitTanks(enemyTanks);
-			m.hitTanks(myTanks);
+			m.hitTanks(enemyTanks);//可以打敌人
+//			m.hitTanks(myTanks);//敌人可以打我的坦克
+			m.hitWall(w1);
+			m.hitWall(w2);
 			m.draw(g);
 		}
 		
@@ -81,8 +83,20 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 		//画自己的坦克
 		for(int i = 0;i<myTanks.size();i++) {
 			Tank myTank =myTanks.get(i);
+			myTank.collidesWithWall(w1);
+			myTank.collidesWithWall(w2);
 			myTank.draw(g);
+			myTank.drawRect(g);
 		}
+		//画数值
+		g.drawString("子弹数量:" + missiles.size(), 10, 50);//有多少炮弹在屏幕上
+		g.drawString("敌人数量:" + enemyTanks.size(), 10, 70);//有多少敌人在屏幕上
+		
+		//画墙
+		w1.drawWallRect(g);
+		w2.drawWallRect(g);
+		w1.draw(g);
+		w2.draw(g);
 		
 	}
 	
@@ -109,11 +123,11 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	public void launchFream() {
 		//添加自己坦克
 		for(int i=0;i<2;i++) {
-			myTanks.add(new Tank(90*(i+1),50,myTankColors[i],true,Tank.Direction.STOP,5,this));
+			myTanks.add(new Tank(90*(i+1),50,myTankColors[i],true,Tank.Direction.STOP,7,this));
 		}		
 		//添加敌人坦克
-		for(int i=0;i<5;i++) {
-			for(int j = 0;j < 2;j++) {
+		for(int i=0;i<4;i++) {
+			for(int j = 0;j < 5;j++) {
 				Color c1 = new Color(random.nextInt(150),random.nextInt(150),random.nextInt(150));
 				Color c2 = new Color(random.nextInt(255),random.nextInt(255),random.nextInt(255));
 				Color[] colors = {c1,c2};
