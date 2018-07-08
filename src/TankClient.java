@@ -34,6 +34,8 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	
 	Wall w1 = new Wall(300,200,20,150,this),w2 = new Wall(500,100,300,20,this);
 	
+	Blood bb = new Blood();
+	
 	ArrayList<Tank> myTanks =new ArrayList<Tank>();//自己坦克数组
 	ArrayList<Tank> enemyTanks = new ArrayList<Tank>();//敌人坦克数组
 	
@@ -89,8 +91,8 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 			myTank.collidesWithWall(w2);
 //			myTank.collidesWithTanks(myTanks);
 			myTank.collidesWithTanks(enemyTanks);
-			myTank.draw(g);
-			myTank.drawRect(g);
+			myTank.draw(g);			
+			myTank.eat(bb);//吃血块
 		}
 		//画数值
 		g.drawString("子弹数量:" + missiles.size(), 10, 50);//有多少炮弹在屏幕上
@@ -102,10 +104,11 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 		
 		
 		//画墙
-		w1.drawWallRect(g);
-		w2.drawWallRect(g);
 		w1.draw(g);
 		w2.draw(g);
+		
+		//画血块
+		bb.draw(g);
 		
 	}
 	

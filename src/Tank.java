@@ -7,6 +7,8 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Random;
 
+import javax.swing.plaf.basic.BasicInternalFrameTitlePane.MaximizeAction;
+
 public class Tank {
 	private int x , y;
 	private int lastX,lastY,lastCX,lastCY;//上一次的坐标和中心坐标
@@ -564,16 +566,6 @@ public class Tank {
 		this.cx = lastCX;//中心x坐标
 		this.cy = lastCY;//中心y坐标
 	}
-	public void drawRect(Graphics g) {
-		//时刻保持cx和cy的更新,因为cx和cy不会随着x,y的变化而变化
-		cx = this.x+ tw+mw/2;//中心x坐标
-		cy = this.y+th/2;//中心y坐标
-		if(this.ptDir == Direction.U || this.ptDir == Direction.D) {
-			g.drawRect(cx-width/2,cy-height/2,width,height);
-		}else if(this.ptDir == Direction.L || this.ptDir == Direction.R){
-			g.drawRect(cx-height/2,cy-width/2,height,width);
-		};
-	}
 	
 	/*
 	 * 得到正好包含坦克的一个矩形对象(用来检测碰撞)
@@ -660,5 +652,16 @@ public class Tank {
 			g2.fillRect(getCx()-height/2,getCy()-height/2-23, height/fullLife*life,20);
 			g2.setColor(c);
 		}
+	}
+	/*
+	 * 吃血块
+	 */
+	public boolean eat(Blood b) {
+		if(this.live && b.isLive()&& this.getRect().intersects(b.getRect())) {
+			this.life =fullLife;
+			b.setLive(false);
+			return true;
+		}
+		return false;
 	}
 }
