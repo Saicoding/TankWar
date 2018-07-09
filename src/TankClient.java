@@ -13,6 +13,14 @@ import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.Random;
 
+
+/**
+ * 
+ * TankClient
+ * 这是坦克游戏的主窗口 
+ * saiyan
+ * 2018年7月8日 下午11:24:44
+ */
 public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方法，建议用这种方式
 
 	private static final long serialVersionUID = 1L;
@@ -28,21 +36,22 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	static boolean keyUpPressed = false;//设置默认按键状态
 	static boolean keyDownPressed = false;//设置默认按键状态
 	
-	Color[] p1Color = {new Color(255,48,48),new Color(205,38,38)};//P1坦克颜色
-	Color[] p2Color = {new Color(255,255,0),new Color(0,255,0)};//P2坦克颜色
-	Color[][] myTankColors = {p1Color,p2Color};//颜色数组
+	
+
 	
 	Wall w1 = new Wall(300,200,20,150,this),w2 = new Wall(500,100,300,20,this);
 	
 	Blood bb = new Blood();
+	
+	public int totalEnemyTankNum = 11;
+	public int time = 0;
+	private int enemyTankName = 1;
 	
 	ArrayList<Tank> myTanks =new ArrayList<Tank>();//自己坦克数组
 	ArrayList<Tank> enemyTanks = new ArrayList<Tank>();//敌人坦克数组
 	
 	ArrayList<Boom> booms =new ArrayList<Boom>();//炸弹容器
 	ArrayList<Missile> missiles = new ArrayList<Missile>();//子弹容器
-	
-	
 	
 	Image offScreenImage = null;//声明一个虚拟图片，一次性展现，解决闪屏问题
 	
@@ -55,25 +64,45 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	}
 	
 
-	@Override
 	public void paint(Graphics g) {
 		
 		//画子弹
 		for(int i = 0 ;i<missiles.size();i++) {
 			Missile m = missiles.get(i);
 			m.hitTanks(enemyTanks);//可以打敌人
-			m.hitTanks(myTanks);//敌人可以打我的坦克
+//			m.hitTanks(myTanks);//敌人可以打我的坦克
 			m.hitWall(w1);
 			m.hitWall(w2);
 			m.draw(g);
 		}
 		
-		//画敌人的坦克
+		//每隔随机一个时间刷新敌人的坦克
+		int timeNum = random.nextInt(200)+100;
+		int pos = random.nextInt(3);
+		time++;
+		if(time>timeNum && totalEnemyTankNum>0) {
+			time =0;
+			ArrayList<Color> colorList = new ArrayList<Color>();
+			for(int i =0 ;i<25;i++) {
+				colorList.add(new Color(random.nextInt(150),random.nextInt(150),random.nextInt(150)));
+			}
+			int space =0;
+			if(pos == 2) space =52;	
+			Tank et =new Tank(GAME_WIDTH/2*pos-space,0,colorList,false,Tank.Direction.D,5,this);
+			String name =enemyTankName+"";
+			enemyTankName++;
+			totalEnemyTankNum--;
+			et.setName(name);
+			enemyTanks.add(et);
+		}
+		
+		//画敌人坦克
+		
 		for(int i = 0;i<enemyTanks.size();i++) {
 			Tank enemyTank =enemyTanks.get(i);
 			enemyTank.draw(g);
 			enemyTank.collidesWithTanks(myTanks);
-			enemyTank.collidesWithTanks(enemyTanks);
+			//enemyTank.collidesWithTanks(enemyTanks);
 		}
 		
 		//画炸弹
@@ -94,15 +123,6 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 			myTank.draw(g);			
 			myTank.eat(bb);//吃血块
 		}
-		//画数值
-		g.drawString("子弹数量:" + missiles.size(), 10, 50);//有多少炮弹在屏幕上
-		g.drawString("敌人数量:" + enemyTanks.size(), 10, 70);//有多少敌人在屏幕上
-		for(int i=0 ;i<myTanks.size();i++) {
-			Tank myTank = myTanks.get(i);
-			g.drawString("生命值:" + myTank.getLife(), 10, 90+i*20);//有多少敌人在屏幕上
-		}
-		
-		
 		//画墙
 		w1.draw(g);
 		w2.draw(g);
@@ -110,9 +130,14 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 		//画血块
 		bb.draw(g);
 		
+		//画数值
+		g.setColor(Color.GREEN);
+		g.drawString("子弹数量:" + missiles.size(), 10, 50);//有多少炮弹在屏幕上
+		g.drawString("敌人数量:" + enemyTanks.size(), 10, 70);//有多少敌人在屏幕上
+		g.drawString("敌人库存:" + totalEnemyTankNum, 10, 90);//敌人库存
 	}
 	
-	@Override
+	
 	/*
 	 * 截取update方法，让图片一次性显示，解决闪屏问题，update原来的方法是自动刷新
 	 */	
@@ -129,35 +154,60 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 		g.drawImage(offScreenImage, 0, 0, null);//把虚拟图片一次性贴到画布上
 	}
 
-	/*
-	 * 启动画布 
+	/**
+	 * 
+	 * launchFream   
+	 * 显示坦克的主窗口  
+	 *               
+	 * void   
+	 * saiyan 
+	 * 2018年7月8日 下午11:26:08   
+	 * 
 	 */
 	public void launchFream() {
 		//添加自己坦克
 		for(int i=0;i<2;i++) {
-			//设置名字
-			String name = "";
+			ArrayList<Color> colorList = new ArrayList<Color>();
 			if(i == 0) {
-				name = "冶";
-			}else if(i ==1) {
-				name ="陶";
+				for(int j =0 ;j<25;j++) {
+					colorList.add(new Color(random.nextInt(150),random.nextInt(150),random.nextInt(150)));
+				}
+			}else if(i == 1) {
+				colorList.add(new Color(0,255,255));//0
+				colorList.add(new Color(0,255,255));//1
+				colorList.add(new Color(255,250,0));//2
+				colorList.add(new Color(255,255,0));//3
+				colorList.add(new Color(255,250,250));//4
+				colorList.add(new Color(0,255,0));//5
+				colorList.add(new Color(139,37,0));//6
+				colorList.add(new Color(0,0,0));//7
+				colorList.add(new Color(105,105,105));//8
+				colorList.add(new Color(0,0,255));//9
+				colorList.add(new Color(255,0,0));//10
+				colorList.add(new Color(255,165,0));//11
+				colorList.add(new Color(148,0,211));//12
+				colorList.add(new Color(148,0,211));//13
+				colorList.add(new Color(255,0,255));//14
+				colorList.add(new Color(131,111,255));//15
+				colorList.add(new Color(0,191,255));//16
+				colorList.add(new Color(139,0,0));//17
+				colorList.add(new Color(0,139,0));//18
+				colorList.add(new Color(255,0,0));//19
 			}
-			Tank t = new Tank(200*(i+1),150,myTankColors[i],true,Tank.Direction.STOP,7,this);
-			t.setName(name);
-			myTanks.add(t);
-		}		
+			Tank t = new Tank(300*(i+1),GAME_HEIGHT-100,colorList,true,Tank.Direction.STOP,7,this);
+			myTanks.add(t);			
+		}	
 		//添加敌人坦克
-		for(int i=0;i<10;i++) {
-			for(int j = 0;j < 2;j++) {
-				Color c1 = new Color(random.nextInt(150),random.nextInt(150),random.nextInt(150));
-				Color c2 = new Color(random.nextInt(255),random.nextInt(255),random.nextInt(255));
-				Color[] colors = {c1,c2};
-				Tank et =new Tank(50+90*(i+1),50+100*(j),colors,false,Tank.Direction.D,5,this);
-				int num = i+j*10;
-				String name =num+"";
-				et.setName(name);
-				enemyTanks.add(et);
+		for(int i=0;i<3;i++) {
+			ArrayList<Color> colorList = new ArrayList<Color>();
+			for(int j =0 ;j<25;j++) {
+				colorList.add(new Color(random.nextInt(150),random.nextInt(150),random.nextInt(150)));
 			}
+			int space =0;
+			if(i == 2) space =52;	
+			Tank et =new Tank(GAME_WIDTH/2*i-space,0,colorList,false,Tank.Direction.D,5,this);
+			totalEnemyTankNum--;
+			enemyTanks.add(et);
 		}
 		
 		 this.setLocation(GAME_POSITION_X,GAME_POSITION_Y);

@@ -1,28 +1,35 @@
+import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Font;
+import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Shape;
+import java.awt.Stroke;
 import java.awt.event.KeyEvent;
+import java.awt.geom.Arc2D;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.Line2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
 import java.util.ArrayList;
 import java.util.Random;
 
-import javax.swing.plaf.basic.BasicInternalFrameTitlePane.MaximizeAction;
 
 public class Tank {
 	private int x , y;
 	private int lastX,lastY,lastCX,lastCY;//上一次的坐标和中心坐标
 	private int life = 0;//坦克生命值
+	
 	private int fullLife = 10;//坦克最大生命值
 	
 	private BloodBar bb = new BloodBar();
 	
-	private Color[] colors = new Color[2];//定义坦克颜色
-	private String name;//坦克名字
-	
-	public void setName(String name) {
-		this.name = name;
-	}
+	private ArrayList<Color> colorList = null;//定义坦克颜色
+	private String name;//坦克名字	
 	
 	private boolean live = true;
 	private int speedX;//x方向速度
@@ -31,7 +38,10 @@ public class Tank {
 	private int tw = 11;//履带宽度
 	private int th = 80;//履带高度
 	private int mw = 30;//中断宽度
-	private int mh = 60;//中间高度
+	private int mh = 63;//中间高度
+	private int pw = 4;//炮筒宽度
+	private int ph = 50;//炮筒宽度
+	
 	private int width = tw*2 +mw+2*this.fengxi;//坦克宽度
 	private int height = this.th;//坦克高度
 	
@@ -70,10 +80,10 @@ public class Tank {
 	/*
 	 * 构造函数
 	 */
-	public Tank(int x, int y, Color[] colors,boolean good,int speed) {//好坏坦克用good区分
+	public Tank(int x, int y, ArrayList<Color> colorList,boolean good,int speed) {//好坏坦克用good区分
 		this.x = x;
 		this.y = y;
-		this.colors = colors;
+		this.colorList = colorList;
 		this.good = good;
 		this.speedX = speed;
 		this.speedY = speed;
@@ -84,8 +94,8 @@ public class Tank {
 	/*
 	 * 利用构造函数持有对象引用
 	 */
-	public Tank(int x,int y ,Color[] colors,boolean good ,Direction dir, int speed,TankClient tc) {
-		this(x,y,colors,good, speed);
+	public Tank(int x,int y ,ArrayList<Color> colorList,boolean good ,Direction dir, int speed,TankClient tc) {
+		this(x,y,colorList,good, speed);
 		this.tc = tc;
 		this.dir = dir;
 	}
@@ -111,11 +121,15 @@ public class Tank {
 		cy = y + th/2;
 		return cy;
 	}
-	
+	/*
+	 * 得到是否是友军
+	 */
 	public boolean isGood() {
 		return good;
 	}
-	
+	/*
+	 * 得到生命值
+	 */
 	public int getLife() {
 		return life;
 	}
@@ -136,7 +150,55 @@ public class Tank {
 	public boolean isLive() {
 		return live;
 	}
-		
+	/*
+	 * 设置坦克名称
+	 */
+	public void setName(String name) {
+		this.name = name;
+	}
+	/*
+	 * 得到炮筒中心x
+	 */
+	public int getPtcx() {
+
+		return 0 ;
+	}
+/*************************坦克方法****************************************/	
+	
+	private Shape tankTopDraw() {
+		cx = getCx();
+		cy = getCy();
+	    Point p1=new Point(cx-10,cy+10);
+	    Point p2=new Point(cx+10,cy+10);
+	    
+	    Point p3=new Point(cx+20,cy-6);
+	    Point p4=new Point(cx+5,cy-21);
+	    Point p5=new Point(cx+2,cy-26);
+	   
+	    Point p6=new Point(cx+pw/2,cy-ph);
+	    
+	    Point p7=new Point(cx-pw/2,cy-ph);
+	    Point p8=new Point(cx-2,cy-26);
+	    Point p9=new Point(cx-5,cy-21);
+	    Point p10=new Point(cx-20,cy-6);
+	    Point p11=new Point(cx-10,cy+10);
+	    
+	    GeneralPath gp=new GeneralPath();    //shape的子类，表示一个形状
+	    gp.append(new Line2D.Double(p1.x,p1.y,p2.x,p2.y),true);   //在形状中添加一条线，即Line2D
+	    gp.lineTo(p3.x,p3.y);   //添加一个点,并和之前的线段相连
+	    gp.lineTo(p4.x,p4.y);  
+	    gp.lineTo(p5.x,p5.y);  
+	    gp.lineTo(p6.x,p6.y);  
+	    gp.lineTo(p7.x,p7.y);  
+	    gp.lineTo(p8.x,p8.y);  
+	    gp.lineTo(p9.x,p9.y);  
+	    gp.lineTo(p10.x,p10.y);  
+	    gp.lineTo(p11.x,p11.y);  
+	    gp.closePath();  //关闭形状创建
+	    
+	    return gp;    //返回该形状
+	}
+	
 	/*
 	 * 坦克模型
 	 */
@@ -149,58 +211,128 @@ public class Tank {
 		int ph = th/2;
 
 		Graphics2D g2 = (Graphics2D) g;
+		Color c = g2.getColor();
+		//使线段更平滑
+		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_DEFAULT);
+		Stroke s = new BasicStroke(1, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
+		Stroke s1 = new BasicStroke(2, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
+		g2.setStroke(s);
+		
 		g2.rotate(Math.toRadians(angel),cx,cy);//以cx,cy为中心旋转画布
-		g2.setColor(colors[0]);//设置炮筒颜色
 			
 		//画两个履带
-		g2.fillRect(cx-tw-mw/2, cy-th/2, tw, th);
-		g2.fillRect(cx+mw/2, cy-th/2, tw, th);
+		RoundRectangle2D rectRound1 = new RoundRectangle2D.Double(cx-tw-mw/2, cy-th/2, tw, th,9,3);
+		RoundRectangle2D rectRound2 = new RoundRectangle2D.Double(cx+mw/2, cy-th/2, tw, th,9,3);
+		GradientPaint gdp1 = new GradientPaint(cx-tw-mw/2, cy-th/2,colorList.get(0),cx-tw-mw/2,cy-th/2+th,colorList.get(1),true);
+		g2.setPaint(gdp1);
+		g2.fill(rectRound1 );
+		g2.fill(rectRound2);
 
 		//画中间车身
+		GradientPaint g1 = new GradientPaint(cx-mw/2+fengxi,cy-mh/2,colorList.get(2),cx-mw/2+fengxi+mw-2*fengxi,cy-mh/2+mh,colorList.get(3));
+		g2.setPaint(g1);
 		g2.fillRect(cx-mw/2+fengxi, cy-mh/2, mw-2*fengxi, mh);
-		
-		//画炮筒
-		g2.setColor(colors[1]);//设置炮筒颜色
 
-		g2.fillRect(cx-pw/2, cy-ph, pw, ph);
-		g2.fillOval(cx-mw/2+fengxi,cy-mw/2,mw-2,mw);
+		GradientPaint g3 = new GradientPaint(cx,cy-mh/2-20,colorList.get(4),cx,cy+20,colorList.get(5));
+		g2.setPaint(g3);
+		g2.fill(tankTopDraw());
 		
+		//画中间的横杠
+		g2.setColor(colorList.get(6));
+		Rectangle2D rect1 = new Rectangle2D.Double(cx-2,cy-26,4,2);
+		g2.fill(rect1);
+		
+		//画中间的圆角矩形
+		g2.setColor(colorList.get(7));
+		RoundRectangle2D rectRound3 = new RoundRectangle2D.Double(cx-13,cy-5,26,10,10,10);		
+		g2.fill(rectRound3);
+		g2.setColor(colorList.get(8));
+		Rectangle2D rect2 = new Rectangle2D.Double(cx-1,cy-5,2,10);
+		g2.fill(rect2);
+		//画圆角矩形里的两个圆
+		if(good) {
+			colorList.set(9, new Color(random.nextInt(255),random.nextInt(255),random.nextInt(255)));
+			g2.setColor(colorList.get(9));
+		}else {
+			g2.setColor(colorList.get(9));
+		}
+		Ellipse2D ellipse1 = new Ellipse2D.Double(cx-11,cy-3,6,6);
+		g2.fill(ellipse1);
+		g2.setColor(colorList.get(10));
+		Ellipse2D ellipse2 = new Ellipse2D.Double(cx+5,cy-3,6,6);
+		g2.fill(ellipse2);
+		//画上方的两个横条
+		g2.setColor(colorList.get(11));
+		Rectangle2D rect3 = new Rectangle2D.Double(cx-13,cy-27,8,2);
+		g2.fill(rect3);
+		Rectangle2D rect4 = new Rectangle2D.Double(cx+5,cy-27,8,2);
+		g2.fill(rect4);
+		//画两个把手
+		g2.setColor(colorList.get(12));
+		g2.fillArc(cx-10, cy-17, 8, 8, 0, -180);
+		g2.setColor(colorList.get(13));
+		g2.fillArc(cx+2, cy-17, 8, 8, 0, -180);
+		g2.setColor(colorList.get(14));
+		g2.fillArc(cx-5, cy-25, 10, 8, 0, -180);
+		//画下面一点的矩形
+		g2.setColor(colorList.get(15));
+		RoundRectangle2D rectRound4 = new RoundRectangle2D.Double(cx-10,cy+10,20,5,3,3);	
+		g2.fill(rectRound4);
+		g2.setColor(colorList.get(16));
+		RoundRectangle2D rectRound5 = new RoundRectangle2D.Double(cx-7,cy+10,14,5,3,3);	
+		g2.fill(rectRound5);
+		g2.setColor(colorList.get(17));
+		RoundRectangle2D rectRound6 = new RoundRectangle2D.Double(cx-6,cy+10,12,5,3,3);	
+		g2.fill(rectRound6);
+		//画下面的栅栏
+		g2.setStroke(s1);
+		g2.setColor(colorList.get(18));
+		RoundRectangle2D rectRound7 = new RoundRectangle2D.Double(cx-12,cy+20,24,10,3,3);	
+
+		g2.draw(rectRound7);
+		Line2D line3 = new Line2D.Double(cx-8,cy+20,cx-8,cy+30);
+		Line2D line4 = new Line2D.Double(cx-4,cy+20,cx-4,cy+30);
+		Line2D line5 = new Line2D.Double(cx,cy+20,cx,cy+30);
+		Line2D line6 = new Line2D.Double(cx+4,cy+20,cx+4,cy+30);
+		Line2D line7 = new Line2D.Double(cx+8,cy+20,cx+8,cy+30);
+		g2.draw(line3);
+		g2.draw(line4);
+		g2.draw(line5);
+		g2.draw(line6);
+		g2.draw(line7);
+		g2.setColor(c);
+		
+
+		g2.setStroke(s);
+		g2.setColor(colorList.get(19));
 		//画履带格子
 		for(int i = 0 ;this.lvdaiPosition+i*lvdaiSpace < th;i++) {
 			//做修正(旋转画布因为不对称,因为画布不支持double类型,只能用int类型,产生像素取舍问题
 			if(ptDir == Direction.D || ptDir == Direction.L) {
-				g2.drawLine(cx-tw-mw/2+fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition, cx-mw/2, cy-th/2+i*lvdaiSpace +this.lvdaiPosition);
-				g2.drawLine(cx+mw/2+fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition, cx+mw/2+tw, cy-th/2+i*lvdaiSpace +this.lvdaiPosition);
+				 Line2D line1 = new Line2D.Double(cx-tw-mw/2+fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition, cx-mw/2, cy-th/2+i*lvdaiSpace +this.lvdaiPosition);
+				 Line2D line2 = new Line2D.Double(cx+mw/2+fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition, cx+mw/2+tw, cy-th/2+i*lvdaiSpace +this.lvdaiPosition);
+				 g2.draw(line1);
+				 g2.draw(line2);
 			}else if(ptDir == Direction.RU || ptDir ==Direction.UL || ptDir ==Direction.LD || ptDir ==Direction.DR) {
-				g2.drawLine(cx-tw-mw/2+2*fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition, cx-mw/2-fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition);
-				g2.drawLine(cx+mw/2+2*fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition, cx+mw/2+tw-fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition);
+				Line2D line1 = new Line2D.Double(cx-tw-mw/2+2*fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition, cx-mw/2-fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition);
+				Line2D line2 = new Line2D.Double(cx+mw/2+2*fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition, cx+mw/2+tw-fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition);
+				g2.draw(line1);
+				 g2.draw(line2);
 			}else {
-				g2.drawLine(cx-tw-mw/2, cy-th/2+i*lvdaiSpace +this.lvdaiPosition, cx-mw/2-fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition);
-				g2.drawLine(cx+mw/2, cy-th/2+i*lvdaiSpace +this.lvdaiPosition, cx+mw/2+tw-fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition);
+				Line2D line1 = new Line2D.Double(cx-tw-mw/2, cy-th/2+i*lvdaiSpace +this.lvdaiPosition, cx-mw/2-fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition);
+				Line2D line2 = new Line2D.Double(cx+mw/2, cy-th/2+i*lvdaiSpace +this.lvdaiPosition, cx+mw/2+tw-fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition);
+				g2.draw(line1);
+				g2.draw(line2);
 			}
 		}
 		g2.rotate(Math.toRadians(-angel),cx,cy);//恢复旋转
 		
-		//设置坦克上的数字
-		Font f=new Font("宋体",1,19);
-		g2.setFont(f);
-		Color c = g2.getColor();
 		if(good) {
-			g2.setColor(new Color(random.nextInt(150),random.nextInt(150),random.nextInt(150)));
-			g2.drawString(this.name, cx-11, cy+8);
-		}else {
-			g2.setColor(new Color(125,38,205));	
-			if(Integer.parseInt(this.name)<=9) {
-				g2.drawString(this.name, cx-6, cy+8);
-			}
-			else if(Integer.parseInt(this.name)>9) {
-				g2.drawString(this.name, cx-11, cy+8);
-			}
-		}		
-		g2.setColor(c);	
-		if(good) {
-			bb.draw(g2);
-		}
+			//bb.draw(g2);
+		}	
+		
+		
 	}
 	/*
 	 * 画坦克
