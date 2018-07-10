@@ -17,6 +17,8 @@ public class Missile {
 	public int width = 10;//子弹宽度
 	public int height = 10;//子弹高度
 	
+	private int angle;
+	
 	private boolean good;//子弹阵营
 	
 	private boolean live = true;//一new出来肯定是活着的
@@ -27,7 +29,6 @@ public class Missile {
 
 	int x, y;//子弹位置(中心)
 	
-	Tank.Direction dir;//子弹方向
 	
 	//随机产生颜色
 	int r = (int)(Math.random()*175);
@@ -40,20 +41,20 @@ public class Missile {
 	/*
 	 * 构造方法
 	 */
-	public Missile(int x, int y,boolean good, Tank.Direction dir,int speed,int width) {
+	public Missile(int x, int y,boolean good, int angle,int speed,int width) {
 		this.x = x;
 		this.y = y;
 		this.good = good;
 		this.speedX =speed;
 		this.speedY =speed;
 		this.width =width;
-		this.dir = dir;
+		this.angle = angle;
 	}
 	/*
 	 * 带引用的构造方法
 	 */
-	public  Missile(int x ,int y,boolean good, Tank.Direction dir ,int speed,int width,TankClient tc) {
-		this(x,y,good,dir,speed,width);
+	public  Missile(int x ,int y,boolean good,int angle ,int speed,int width,TankClient tc) {
+		this(x,y,good,angle,speed,width);
 		this.tc = tc;
 	}
 	
@@ -84,40 +85,8 @@ public class Missile {
 	 * 子弹移动方法
 	 */
 	public void move() {
-		switch(dir) {
-			case L :
-				x -=speedX;
-				break;
-			case R :
-				x +=speedX;
-				break;
-			case U :
-				y -=speedY;
-				break;
-			case D :
-				y +=speedY;
-				break;
-			case LD :
-				x -=(int)(speedX/Math.sqrt(2));
-				y +=(int)(speedY/Math.sqrt(2));
-				break;
-			case DR :
-				y +=(int)(speedY/Math.sqrt(2));
-				x +=(int)(speedX/Math.sqrt(2));
-				break;
-			case RU :
-				x +=(int)(speedX/Math.sqrt(2));
-				y -=(int)(speedY/Math.sqrt(2));
-				break;
-			case UL :
-				y -=(int)(speedY/Math.sqrt(2));
-				x -=(int)(speedX/Math.sqrt(2));
-				break;
-			case STOP:
-				x -= 0;
-				y -= 0;
-				break;
-		}
+		x += (int)(Math.cos(angle * 3.14 / 180)*speedX);
+		y += (int)(Math.sin(angle * 3.14 / 180)*speedY);
 		//判断边界条件(粗略的,后期再优化)
 		if(x < 0 || y < 0 || x > TankClient.GAME_WIDTH || y > TankClient.GAME_HEIGHT) {
 			live = false;

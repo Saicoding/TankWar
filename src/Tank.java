@@ -9,7 +9,6 @@ import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.event.KeyEvent;
-import java.awt.geom.Arc2D;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
@@ -23,6 +22,7 @@ public class Tank {
 	private int x , y;
 	private int lastX,lastY,lastCX,lastCY;//上一次的坐标和中心坐标
 	private int life = 0;//坦克生命值
+	private int angle = 0;//坦克角度
 	
 	private int fullLife = 10;//坦克最大生命值
 	
@@ -65,16 +65,15 @@ public class Tank {
 	private int myMissileSize = 40;//我的坦克子弹大小
 	
 	private boolean good =false;//好坏坦克
-	private boolean bL = false,bR = false,bU = false,bD = false;//定义初始四个方向键按下状态
+	private boolean bL = false,bR = false,bF = false,bB = false;//定义初始四个方向键按下状态
+	private boolean stop = false;//坦克是否停下
+	private boolean turning = false;//是否在转弯
+	private int targetAngle = 0;//目标角度
 	
-	TankClient tc;	//利用构造函数持有对象引用
+	private int left,right,top,bottom;//坦克的四个边缘
+
 	
-	enum Direction {L,R,U,D,LD,DR,RU,UL,STOP};//枚举9个方向，其中STOP是停止状态
-	
-	private Direction dir = Direction.STOP;//设置默认方向是停止状态
-	Direction[] dirs = Direction.values();//将枚举类型转为数组
-	private Direction ptDir = Direction.D;//设置炮筒方向
-	
+	TankClient tc;	//利用构造函数持有对象引用	
 	
 
 	/*
@@ -87,17 +86,24 @@ public class Tank {
 		this.good = good;
 		this.speedX = speed;
 		this.speedY = speed;
-		if(good) this.life=10;//如果是友 生命初始是10
-		else this.life =1;//如果是敌人,生命初始是1
+		if(good) {
+			this.life=10;//如果是友 生命初始是10
+			this.stop = true;
+		}
+		else {
+			this.life =1;//如果是敌人,生命初始是1
+			this.stop =false;
+		}
+
 	}
 	
 	/*
 	 * 利用构造函数持有对象引用
 	 */
-	public Tank(int x,int y ,ArrayList<Color> colorList,boolean good ,Direction dir, int speed,TankClient tc) {
+	public Tank(int x,int y ,ArrayList<Color> colorList,boolean good ,int angle, int speed,TankClient tc) {
 		this(x,y,colorList,good, speed);
 		this.tc = tc;
-		this.dir = dir;
+		this.angle = angle;
 	}
 	
 	public int getWidth() {
@@ -156,13 +162,40 @@ public class Tank {
 	public void setName(String name) {
 		this.name = name;
 	}
+	public void setStop(boolean stop) {
+		this.stop = stop;
+	}
 	/*
 	 * 得到炮筒中心x
 	 */
 	public int getPtcx() {
+		x =(int)(getCx() +  ph * Math.cos(angle * 3.14 / 180));
 
+		y = (int)(getCy() + ph* Math.sin(angle *3.14 /180));
 		return 0 ;
 	}
+	
+
+	public int getLeft() {
+		left = getCx()- (int)(height/2*Math.cos(angle*3.14/180));
+		return left;
+	}
+
+	public int getRight() {
+		right =getCx()+ (int)(height/2*Math.cos(angle*3.14/180));
+		return right;
+	}
+
+	public int getTop() {
+		top = getCy()-(int)(width/2*Math.sin(angle*3.14/180));
+		return top;
+	}
+
+	public int getBottom() {
+		bottom =getCy()-(int)(width/2*Math.sin(angle*3.14/180));
+		return bottom;
+	}
+
 /*************************坦克方法****************************************/	
 	
 	private Shape tankTopDraw() {
@@ -308,23 +341,14 @@ public class Tank {
 		g2.setColor(colorList.get(19));
 		//画履带格子
 		for(int i = 0 ;this.lvdaiPosition+i*lvdaiSpace < th;i++) {
-			//做修正(旋转画布因为不对称,因为画布不支持double类型,只能用int类型,产生像素取舍问题
-			if(ptDir == Direction.D || ptDir == Direction.L) {
-				 Line2D line1 = new Line2D.Double(cx-tw-mw/2+fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition, cx-mw/2, cy-th/2+i*lvdaiSpace +this.lvdaiPosition);
-				 Line2D line2 = new Line2D.Double(cx+mw/2+fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition, cx+mw/2+tw, cy-th/2+i*lvdaiSpace +this.lvdaiPosition);
-				 g2.draw(line1);
-				 g2.draw(line2);
-			}else if(ptDir == Direction.RU || ptDir ==Direction.UL || ptDir ==Direction.LD || ptDir ==Direction.DR) {
-				Line2D line1 = new Line2D.Double(cx-tw-mw/2+2*fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition, cx-mw/2-fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition);
-				Line2D line2 = new Line2D.Double(cx+mw/2+2*fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition, cx+mw/2+tw-fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition);
-				g2.draw(line1);
-				 g2.draw(line2);
-			}else {
-				Line2D line1 = new Line2D.Double(cx-tw-mw/2, cy-th/2+i*lvdaiSpace +this.lvdaiPosition, cx-mw/2-fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition);
-				Line2D line2 = new Line2D.Double(cx+mw/2, cy-th/2+i*lvdaiSpace +this.lvdaiPosition, cx+mw/2+tw-fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition);
-				g2.draw(line1);
-				g2.draw(line2);
-			}
+			Point p1 = new Point(cx-tw-mw/2+fengxi,cy-th/2+i*lvdaiSpace +this.lvdaiPosition);
+			Point p2 = new Point(cx-mw/2,cy-th/2+i*lvdaiSpace +this.lvdaiPosition);
+			Point p3 = new Point(cx+mw/2+fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition);
+			Point p4 = new Point(cx+mw/2+tw, cy-th/2+i*lvdaiSpace +this.lvdaiPosition);
+			Line2D line1 = new Line2D.Double(p1.x,p1.y,p2.x,p2.y);
+			Line2D line2 = new Line2D.Double(p3.x,p3.y,p4.x,p4.y);
+			g2.draw(line1);
+			g2.draw(line2);
 		}
 		g2.rotate(Math.toRadians(-angel),cx,cy);//恢复旋转
 		
@@ -349,36 +373,9 @@ public class Tank {
 		}
 		this.cx = this.x+ tw+mw/2;//中心x坐标
 		this.cy = this.y+th/2;//中心y坐标
-		switch(this.ptDir) {
-			case L :
-				tankModal(g,-90);
-				break;
-			case R :
-				tankModal(g,90);
-				break;
-			case U :
-				tankModal(g,0);
-				break;
-			case D :
-				tankModal(g,180);
-				break;
-			case LD :
-				tankModal(g,-135);
-				break;
-			case DR :
-				tankModal(g,135);
-				break;
-			case RU :
-				tankModal(g,45);
-				break;
-			case UL :
-				tankModal(g,-45);
-				break;
-			case STOP:
-				tankModal(g,0);
-				break;
-		}		
 
+		tankModal(g,angle+90);
+	
 		move();
 	}
 
@@ -397,16 +394,16 @@ public class Tank {
 					tc.missiles.add(fire(myTankShotSpeend,myMissileSize));
 					break;
 				case KeyEvent.VK_A:
-					bL = true;
+					bL =true;
 					break;
 				case KeyEvent.VK_D:	
-					bR = true;
+					bR =true;
 					break;
 				case KeyEvent.VK_W:		
-					bU = true;
+					bF= true;
 					break;
 				case KeyEvent.VK_S:	
-					bD = true;
+					bB = true;
 					break;
 			}
 		}else if(p =="P2") {
@@ -425,10 +422,10 @@ public class Tank {
 					bR = true;
 					break;
 				case KeyEvent.VK_UP:
-					bU = true;
+					bF = true;
 					break;
 				case KeyEvent.VK_DOWN:
-					bD = true;
+					bB = true;
 					break;
 			}
 		}
@@ -450,10 +447,10 @@ public class Tank {
 					bR = false;
 					break;
 				case KeyEvent.VK_W:		
-					bU = false;
+					bF = false;
 					break;
 				case KeyEvent.VK_S:	
-					bD = false;
+					bB = false;
 					break;
 			}
 		}else if(p =="P2") {//玩家2
@@ -465,10 +462,10 @@ public class Tank {
 					bR = false;
 					break;
 				case KeyEvent.VK_UP:
-					bU = false;
+					bF = false;
 					break;
 				case KeyEvent.VK_DOWN:
-					bD = false;
+					bB = false;
 					break;
 			}
 		}			
@@ -487,63 +484,50 @@ public class Tank {
 		this.lastY = y;
 		this.lastCX = cx;
 		this.lastCY = cy;
-		switch(dir) {
-			case L :
-				x -=speedX;
-				break;
-			case R :
-				x +=speedX;
-				break;
-			case U :
-				y -=speedY;
-				break;
-			case D :
-				y +=speedY;
-				break;
-			case LD :
-				x -=(int)(speedX/Math.sqrt(2));
-				y +=(int)(speedY/Math.sqrt(2));
-				break;
-			case DR :
-				y +=(int)(speedY/Math.sqrt(2));
-				x +=(int)(speedX/Math.sqrt(2));
-				break;
-			case RU :
-				x +=(int)(speedX/Math.sqrt(2));
-				y -=(int)(speedY/Math.sqrt(2));
-				break;
-			case UL :
-				y -=(int)(speedY/Math.sqrt(2));
-				x -=(int)(speedX/Math.sqrt(2));
-				break;
-			case STOP:
-				x -= 0;
-				y -= 0;
-				break;
-		}	
-		
+		if(good) {//如果是友军
+			if(bL) angle --;
+			if(bR) angle ++;
+			if(!stop) {
+				if(!bB) {
+					x += (int)(Math.cos(angle * 3.14 / 180)*speedX);
+					y += (int)(Math.sin(angle * 3.14 / 180)*speedY);
+				}else {
+					x -= (int)(Math.cos(angle * 3.14 / 180)*speedX);
+					y -= (int)(Math.sin(angle * 3.14 / 180)*speedY);
+				}		
+			}
+		}else {
+			if(!stop) {
+				if(!turning) {
+					x += (int)(Math.cos(angle * 3.14 / 180)*speedX);
+					y += (int)(Math.sin(angle * 3.14 / 180)*speedY);
+				}else {
+					turnAngel(angle ,targetAngle);
+				}
+			}			
+		}
+
 		//移动时随时调整炮筒方向
-		if(this.dir != Direction.STOP) {
+		if(!stop || bL || bR) {
 			//更新履带状态
 			this.lvdaiPosition -=2;
 			if(this.lvdaiPosition <0)
 				this.lvdaiPosition =6;
-			//更新子弹方向
-			this.ptDir = this.dir;
+//			//更新子弹方向
+//			this.ptDir = this.dir;
 		}
 		
 		//坦克边界判断
-		if(x < 20) x = 20;
-		if(y < 30) y = 30;
-		if(x + width > TankClient.GAME_WIDTH-20) x = TankClient.GAME_WIDTH - width-20;
-		if(y + height > TankClient.GAME_HEIGHT) y = TankClient.GAME_HEIGHT - height;
+		tankWillHitLedge();
 		
 		if(!good) {
 			step++;
 			if(step > (random.nextInt(800)+50)){
 				step = 0;
-				int rn = random.nextInt(dirs.length);//产生一个在length范围内的整数
-				dir = dirs[rn];
+				//开始转向
+				turning = true;
+				int rn = random.nextInt(360);//产生一个在length范围内的整数
+				targetAngle =rn;
 			}
 			stepShot++;
 			if(stepShot >(random.nextInt(4000)+20)) {
@@ -552,61 +536,89 @@ public class Tank {
 			}
 		}
 	}
+	/*
+	 * 判断坦克是否要撞击边界
+	 */
+	private boolean tankWillHitLedge() {
+		
+		if(getLeft() < 0 || getRight() >TankClient.GAME_WIDTH || getTop() <0 || getBottom()>TankClient.GAME_HEIGHT ) {
+			stay();
+//			System.out.println(getLeft());
+			return true;
+		}
+		return false;
+	}
+	
+	private void turnAngel(int ca ,int ta) {
+		if(ta > ca && (ta -ca)<180) {
+			this.angle++;
+			if(angle>=targetAngle) {
+				turning =false;
+			}
+		}else if (ta < ca && (ca-ta)<180) {
+			this.angle--;
+			if(angle<=targetAngle) {
+				turning =false;
+			}
+		}else if(ta > ca && (ta -ca)>180) {
+			this.angle--;
+			if(angle<0) {
+				angle = 360 +angle;
+			}
+			if(angle<=targetAngle) {
+				turning =false;
+			}
+		}else if(ta < ca && (ca-ta)>180) {
+			this.angle++;
+			if(angle>360) {
+				angle =angle -360;
+			}
+			if(angle<=targetAngle) {
+				turning = false;
+			}
+		}else if(ta == ca){
+			turning = false;
+		}
+		
+	}
 	
 	/*
 	 * 确定坦克方向dir
 	 */
-	private void locateDirection() {		
-		if(bL && !bU && !bR && !bD) {
-			dir =Direction.L;
-		}
-		else if(!bL && !bU && bR && !bD) {
-			dir =Direction.R;
-		}
-		else if(!bL && bU && !bR && !bD) {
-			dir =Direction.U;
-		}
-		else if(!bL && !bU && !bR && bD) {
-			dir =Direction.D;	
-		}
-		else if(bL && !bU && !bR && bD) {
-			dir =Direction.LD;
-		}
-		else if(!bL && !bU && bR && bD) {
-			dir =Direction.DR;
-		}
-		else if(!bL && bU && bR && !bD) {
-			dir =Direction.RU;
-		}
-		else if(bL && bU && !bR && !bD) {
-			dir =Direction.UL;
-		}
-		else if(!bL && !bU && !bR && !bD) {
-			dir =Direction.STOP;
+	private void locateDirection() {
+		if(good) {
+			if(!bF && !bB ) {
+				setStop(true);
+			}
+			if(bF || bB) {
+				setStop(false);
+			}		
 		}
 	}
+
+
 
 	/*
 	 * 射击,用面向对象的思想，当坦克射击时会射出一个子弹
 	 */
 	public Missile fire(int speed,int width) {
-		Missile m =new Missile(cx, cy, this.good,this.ptDir, speed,width,this.tc);//炮筒方向是哪个，子弹方向就是哪个
+		Missile m =new Missile(cx, cy, this.good,this.angle, speed,width,this.tc);//炮筒方向是哪个，子弹方向就是哪个
 		return m;
 	}
 	
 	/*
 	 * 重载fire方法
 	 */
-	public Missile fire(int speed,int width,Direction dir) {
-		Missile m =new Missile(cx, cy, this.good,dir, speed,width,this.tc);//炮筒方向是哪个，子弹方向就是哪个
+	public Missile fire(int speed,int width,int angle) {
+		Missile m =new Missile(cx, cy, this.good,angle, speed,width,this.tc);//炮筒方向是哪个，子弹方向就是哪个
 		return m;
 	}
 	/*
 	 * 超级炮弹
 	 */
 	public void superFire() {
-		Direction[] dirs =Direction.values();
-		for(int i=0 ;i<dirs.length-1 ;i++) {
+		int[] dirs = {0,45,90,135,180,225,270,315};
+		for(int i=0 ;i<dirs.length ;i++) {
 			Missile m = fire(2,100,dirs[i]);
 			tc.missiles.add(m);
 		}		
@@ -615,80 +627,80 @@ public class Tank {
 	/*
 	 * 得到碰撞后stay后如果还是碰撞状态,需要移动的距离x
 	 */
-	public int getMoveX(Wall w) {
-		if(w.getCx()<cx) {
-			if(ptDir == Direction.L || ptDir == Direction.R) {
-				return (w.getCx()+w.getW()/2)-(cx-height/2);				
-			}else if(ptDir == Direction.U || ptDir == Direction.D) {
-				return (w.getCx()+w.getW()/2)-(cx-width/2);
-			}
-		}else if(w.getCx()>cx) {
-			if(ptDir == Direction.L || ptDir == Direction.R) {
-				return (w.getCx()-w.getW()/2)-(cx+height/2);
-			}else if(ptDir == Direction.U || ptDir == Direction.D) {
-				return (w.getCx()-w.getW()/2)-(cx+width/2);
-			}
-		}
-		return 1;
-	}
+//	public int getMoveX(Wall w) {
+//		if(w.getCx()<cx) {
+//			if(ptDir == Direction.L || ptDir == Direction.R) {
+//				return (w.getCx()+w.getW()/2)-(cx-height/2);				
+//			}else if(ptDir == Direction.U || ptDir == Direction.D) {
+//				return (w.getCx()+w.getW()/2)-(cx-width/2);
+//			}
+//		}else if(w.getCx()>cx) {
+//			if(ptDir == Direction.L || ptDir == Direction.R) {
+//				return (w.getCx()-w.getW()/2)-(cx+height/2);
+//			}else if(ptDir == Direction.U || ptDir == Direction.D) {
+//				return (w.getCx()-w.getW()/2)-(cx+width/2);
+//			}
+//		}
+//		return 1;
+//	}
 	/*
 	 * 得到碰撞后stay后如果还是碰撞状态,需要移动的距离y
 	 */
-	public int getMoveY(Wall w) {
-		if(w.getCy()<cy) {
-			if(ptDir == Direction.L || ptDir == Direction.R) {
-				return (w.getCy()+w.getH()/2)-(cy-width/2);				
-			}else if(ptDir == Direction.U || ptDir == Direction.D) {
-				return (w.getCy()+w.getH()/2)-(cy-height/2);
-			}
-		}else if(w.getCy()>cy) {
-			if(ptDir == Direction.L || ptDir == Direction.R) {
-				return (w.getCy()-w.getH()/2)-(cy+width/2);
-			}else if(ptDir == Direction.U || ptDir == Direction.D) {
-				return (w.getCy()-w.getH()/2)-(cy+height/2);
-			}
-		}
-		return 1;
-	}
+//	public int getMoveY(Wall w) {
+//		if(w.getCy()<cy) {
+//			if(ptDir == Direction.L || ptDir == Direction.R) {
+//				return (w.getCy()+w.getH()/2)-(cy-width/2);				
+//			}else if(ptDir == Direction.U || ptDir == Direction.D) {
+//				return (w.getCy()+w.getH()/2)-(cy-height/2);
+//			}
+//		}else if(w.getCy()>cy) {
+//			if(ptDir == Direction.L || ptDir == Direction.R) {
+//				return (w.getCy()-w.getH()/2)-(cy+width/2);
+//			}else if(ptDir == Direction.U || ptDir == Direction.D) {
+//				return (w.getCy()-w.getH()/2)-(cy+height/2);
+//			}
+//		}
+//		return 1;
+//	}
 	/*
 	 * 得到碰撞后stay后如果还是碰撞状态,需要移动的距离x
 	 */
-	public int getTankMoveX(Tank t) {
-		if(t.getCx()<this.getCx()) {
-			if(ptDir == Direction.L || ptDir == Direction.R) {
-				return (t.getCx()+t.getWidth()/2)-(this.getCx()-this.height/2);				
-			}else if(ptDir == Direction.U || ptDir == Direction.D) {
-				return (t.getCx()+t.getWidth()/2)-(this.getCx()-this.width/2);
-			}
-		}else if(t.getCx()>this.getCx()) {
-			if(ptDir == Direction.L || ptDir == Direction.R) {
-				return (t.getCx()-t.getWidth()/2)-(this.getCx()+this.height/2);
-			}else if(ptDir == Direction.U || ptDir == Direction.D) {
-				return (t.getCx()-t.getWidth()/2)-(this.getCx()+this.width/2);
-			}
-		}
-		return 1;
-	}
+//	public int getTankMoveX(Tank t) {
+//		if(t.getCx()<this.getCx()) {
+//			if(ptDir == Direction.L || ptDir == Direction.R) {
+//				return (t.getCx()+t.getWidth()/2)-(this.getCx()-this.height/2);				
+//			}else if(ptDir == Direction.U || ptDir == Direction.D) {
+//				return (t.getCx()+t.getWidth()/2)-(this.getCx()-this.width/2);
+//			}
+//		}else if(t.getCx()>this.getCx()) {
+//			if(ptDir == Direction.L || ptDir == Direction.R) {
+//				return (t.getCx()-t.getWidth()/2)-(this.getCx()+this.height/2);
+//			}else if(ptDir == Direction.U || ptDir == Direction.D) {
+//				return (t.getCx()-t.getWidth()/2)-(this.getCx()+this.width/2);
+//			}
+//		}
+//		return 1;
+//	}
 	
 	/*
 	 * 得到坦克互相碰撞后stay后如果还是碰撞状态,需要移动的距离y
 	 */
-	public int getTankMoveY(Tank t) {
-		if(t.getCy()<cy) {
-			if(ptDir == Direction.L || ptDir == Direction.R) {
-				return (t.getCy()+t.getHeight()/2)-(this.getCy()-this.width/2);				
-			}else if(ptDir == Direction.U || ptDir == Direction.D) {
-				return (t.getCy()+t.getHeight()/2)-(this.getCy()-this.height/2);
-			}
-		}else if(t.getCy()>cy) {
-			if(ptDir == Direction.L || ptDir == Direction.R) {
-				return (t.getCy()-t.getHeight()/2)-(this.getCy()+this.width/2);
-			}else if(ptDir == Direction.U || ptDir == Direction.D) {
-				return (t.getCy()-t.getHeight()/2)-(this.getCy()+this.height/2);
-			}
-		}
-		return 1;
-	}
+//	public int getTankMoveY(Tank t) {
+//		if(t.getCy()<cy) {
+//			if(ptDir == Direction.L || ptDir == Direction.R) {
+//				return (t.getCy()+t.getHeight()/2)-(this.getCy()-this.width/2);				
+//			}else if(ptDir == Direction.U || ptDir == Direction.D) {
+//				return (t.getCy()+t.getHeight()/2)-(this.getCy()-this.height/2);
+//			}
+//		}else if(t.getCy()>cy) {
+//			if(ptDir == Direction.L || ptDir == Direction.R) {
+//				return (t.getCy()-t.getHeight()/2)-(this.getCy()+this.width/2);
+//			}else if(ptDir == Direction.U || ptDir == Direction.D) {
+//				return (t.getCy()-t.getHeight()/2)-(this.getCy()+this.height/2);
+//			}
+//		}
+//		return 1;
+//	}
 	/*
 	 * 让坦克回到上一次的位置
 	 */
@@ -699,6 +711,16 @@ public class Tank {
 		this.cy = lastCY;//中心y坐标
 	}
 	
+	public void  drawRectangle(Graphics g) {
+		Graphics2D g2 = (Graphics2D)g;
+		Rectangle r =getRect();
+		Shape s = r.getBounds2D();
+		Color c = g.getColor();
+		g2.setColor(Color.GREEN);
+		g2.draw(s);
+		g2.setColor(c);
+	}
+	
 	/*
 	 * 得到正好包含坦克的一个矩形对象(用来检测碰撞)
 	 */
@@ -706,12 +728,16 @@ public class Tank {
 		//时刻保持cx和cy的更新,因为cx和cy不会随着x,y的变化而变化
 		cx = this.x+ tw+mw/2;//中心x坐标
 		cy = this.y+th/2;//中心y坐标
-		if(this.ptDir == Direction.U || this.ptDir == Direction.D) {
-			return new Rectangle(cx-width/2,cy-height/2,width,height);
-		}else if(this.ptDir == Direction.L || this.ptDir == Direction.R){
-			return new Rectangle(cx-height/2,cy-width/2,height,width);
-		}
-		return new Rectangle(cx-height/2,cy-width/2,height,width);	
+//		System.out.println("之前"+(cx-height/2));
+//		System.out.println("之后"+(int)((cx-height/2)*Math.cos(angle * 3.14 / 180)));
+		//Rectangle r =new Rectangle((int)((cx-height/2)*Math.cos(angle * 3.14 / 180)),(int)((cy-width/2)*Math.sin(angle * 3.14 / 180)),width,height);
+		int rx =  cx-height/2;
+		int ry =  cy-width/2;
+
+		rx += (int)(Math.cos(angle * 3.14 / 180)*height);
+		ry += (int)(Math.sin(angle * 3.14 / 180)*width);
+		Rectangle r = new  Rectangle(rx,ry,height,width);
+		return r;
 	}
 	
 	/*
@@ -721,17 +747,6 @@ public class Tank {
 		//判断如果是碰撞状态,就恢复到上一次状态,如果此时还是碰撞状态,就根据方向来进行移动
 		if(this.live && this.getRect().intersects(w.getRect())) {
 			this.stay();	
-			while(this.getRect().intersects(w.getRect())) {
-				System.out.println("ok1");	
-				if(Math.abs(getMoveX(w))>Math.abs(getMoveY(w))) {
-					if(getMoveY(w)>0)y = y+1;
-					else if(getMoveY(w)<0) y =y-1;
-
-				}else {
-					if(getMoveX(w)>0)x = x+1;
-					else if(getMoveX(w)<0) x =x-1;				
-				}
-			}
 			return true;
 		}
 		return false;

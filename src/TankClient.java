@@ -11,6 +11,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Random;
 
 
@@ -43,7 +44,7 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	
 	Blood bb = new Blood();
 	
-	public int totalEnemyTankNum = 11;
+	public int totalEnemyTankNum = 0;
 	public int time = 0;
 	private int enemyTankName = 1;
 	
@@ -62,9 +63,10 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 		TankClient tc = new TankClient();
 		tc.launchFream();
 	}
-	
+
 
 	public void paint(Graphics g) {
+
 		
 		//画子弹
 		for(int i = 0 ;i<missiles.size();i++) {
@@ -88,7 +90,7 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 			}
 			int space =0;
 			if(pos == 2) space =52;	
-			Tank et =new Tank(GAME_WIDTH/2*pos-space,0,colorList,false,Tank.Direction.D,5,this);
+			Tank et =new Tank(GAME_WIDTH/2*pos-space,0,colorList,false,90,5,this);
 			String name =enemyTankName+"";
 			enemyTankName++;
 			totalEnemyTankNum--;
@@ -122,6 +124,7 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 			myTank.collidesWithTanks(enemyTanks);
 			myTank.draw(g);			
 			myTank.eat(bb);//吃血块
+			myTank.drawRectangle(g);
 		}
 		//画墙
 		w1.draw(g);
@@ -194,18 +197,18 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 				colorList.add(new Color(0,139,0));//18
 				colorList.add(new Color(255,0,0));//19
 			}
-			Tank t = new Tank(300*(i+1),GAME_HEIGHT-100,colorList,true,Tank.Direction.STOP,7,this);
+			Tank t = new Tank(300*(i+1),GAME_HEIGHT-100,colorList,true,0,7,this);
 			myTanks.add(t);			
 		}	
 		//添加敌人坦克
-		for(int i=0;i<3;i++) {
+		for(int i=0;i<0;i++) {
 			ArrayList<Color> colorList = new ArrayList<Color>();
 			for(int j =0 ;j<25;j++) {
 				colorList.add(new Color(random.nextInt(150),random.nextInt(150),random.nextInt(150)));
 			}
 			int space =0;
 			if(i == 2) space =52;	
-			Tank et =new Tank(GAME_WIDTH/2*i-space,0,colorList,false,Tank.Direction.D,5,this);
+			Tank et =new Tank(GAME_WIDTH/2*i-space,0,colorList,false,180,5,this);
 			totalEnemyTankNum--;
 			enemyTanks.add(et);
 		}
