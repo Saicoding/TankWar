@@ -1,6 +1,10 @@
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Stroke;
 import java.util.ArrayList;
 
 /**
@@ -62,15 +66,21 @@ public class Missile {
 	 * 画子弹
 	 */
 	public void draw(Graphics g) {
+		Graphics2D g2 = (Graphics2D)g;
+		//使线段更平滑
+		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_DEFAULT);
+		Stroke s = new BasicStroke(1, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
+		g2.setStroke(s);
 		//如果子弹死了,移除,并return 不画了
 		if(!live) {
 			tc.missiles.remove(this);
 			return;
 		}
-		Color c = g.getColor();
-		g.setColor(this.color);
-		g.fillOval(x-this.width/2, y-this.width/2, this.width, this.width);
-		g.setColor(c);
+		Color c = g2.getColor();
+		g2.setColor(this.color);
+		g2.fillOval(x-this.width/2, y-this.width/2, this.width, this.width);
+		g2.setColor(c);
 		
 		move();
 	}
@@ -104,15 +114,15 @@ public class Missile {
 	 * 判断是否打中我的坦克
 	 */
 	public boolean hitMyTank(Tank t) {
-		if(this.live && this.getRect().intersects(t.getRect()) && t.isLive()&& !t.isGood() == this.good) {
-			t.setLife(t.getLife()-1);
-			if(t.getLife() <=0) {
-				t.setLive(false);
-			}	
-			if(!this.good)this.setLive(false);
-			tc.booms.add(new Boom(t.getCx(),t.getCy(),tc));
-			return true;
-		}
+//		if(this.live && this.getRect().intersects(t.getRect()) && t.isLive()&& !t.isGood() == this.good) {
+//			t.setLife(t.getLife()-1);
+//			if(t.getLife() <=0) {
+//				t.setLive(false);
+//			}	
+//			if(!this.good)this.setLive(false);
+//			tc.booms.add(new Boom(t.getCx(),t.getCy(),tc));
+//			return true;
+//		}
 		return false;
 	}
 	
