@@ -2,7 +2,6 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
 import java.util.ArrayList;
@@ -14,26 +13,23 @@ import java.util.ArrayList;
  * @author:        saiyan
  * @date:          2018年7月5日 下午10:09:27
  */
-public class Missile {
-	public int speedX;//x方向的速度
-	public int speedY;//y方向的速度
-	
+public class Missile extends MyCircle{
+	public int x, y;//子弹位置(中心)
 	public int width = 10;//子弹宽度
 	public int height = 10;//子弹高度
 	
+	public int speed;
+	public Vector speedV = new Vector();
+	
 	private int angle;
-	
-	private boolean good;//子弹阵营
-	
+	private boolean good;//子弹阵营	
 	private boolean live = true;//一new出来肯定是活着的
+	public Vector lastPosition = new Vector();
 	
 	public void setLive(boolean live) {//设置子弹是否活着
 		this.live = live;
 	}
 
-	int x, y;//子弹位置(中心)
-	
-	
 	//随机产生颜色
 	int r = (int)(Math.random()*175);
 	int g = (int)(Math.random()*175);
@@ -41,6 +37,7 @@ public class Missile {
 	Color color = new Color(r,g,b);//子弹颜色
 	
 	private TankClient tc;//创建tc引用
+
 	
 	/*
 	 * 构造方法
@@ -49,8 +46,7 @@ public class Missile {
 		this.x = x;
 		this.y = y;
 		this.good = good;
-		this.speedX =speed;
-		this.speedY =speed;
+		this.speed = speed;
 		this.width =width;
 		this.angle = angle;
 	}
@@ -60,6 +56,16 @@ public class Missile {
 	public  Missile(int x ,int y,boolean good,int angle ,int speed,int width,TankClient tc) {
 		this(x,y,good,angle,speed,width);
 		this.tc = tc;
+		this.radius = width ;
+		initSpeedV();
+	}
+	
+	public void initSpeedV() {
+	    float l = (float) ((angle * Math.PI) / 180);        
+	    float cosv = (float) Math.cos(l);  
+	    float sinv = (float) Math.sin(l);  
+		speedV.x = cosv*speed;
+		speedV.y = sinv*speed;
 	}
 	
 	/*
@@ -95,34 +101,31 @@ public class Missile {
 	 * 子弹移动方法
 	 */
 	public void move() {
-		x += (int)(Math.cos(angle * 3.14 / 180)*speedX);
-		y += (int)(Math.sin(angle * 3.14 / 180)*speedY);
+		lastPosition.x = x;
+		lastPosition.y = y;
+		x += speedV.x;
+		y += speedV.y;
+	}
+	
+	public void collidesWithScreen() {
 		//判断边界条件(粗略的,后期再优化)
 		if(x < 0 || y < 0 || x > TankClient.GAME_WIDTH || y > TankClient.GAME_HEIGHT) {
 			live = false;
 		}
 	}
 	
-	/*
-	 * 得到正好包含子弹的一个矩形对象(用来检测碰撞)
-	 */
-	public Rectangle getRect() {
-		return new Rectangle(x-width/2,y-width/2,width,width);//这里x,y是子弹的中心,所以要这样算矩形
-	}
-	
-	/*
-	 * 判断是否打中我的坦克
-	 */
-	public boolean hitMyTank(Tank t) {
-//		if(this.live && this.getRect().intersects(t.getRect()) && t.isLive()&& !t.isGood() == this.good) {
-//			t.setLife(t.getLife()-1);
-//			if(t.getLife() <=0) {
-//				t.setLive(false);
-//			}	
-//			if(!this.good)this.setLive(false);
-//			tc.booms.add(new Boom(t.getCx(),t.getCy(),tc));
-//			return true;
-//		}
+	public boolean collidesWithTank(Tank t) {
+		Vector position = new Vector(new MyPoint(x,y));
+		Vector displacement = position.subTract(lastPosition);
+		if(this.isLive() && t.isLive() && collidesWith(t,displacement).axis!=null &&  collidesWith(t,displacement).overlap !=0 && this.good !=t.isGood()) {
+			t.setLife(t.getLife()-1);
+			if(t.getLife() <=0) {
+				t.setLive(false);
+			}	
+			if(!this.good)this.setLive(false);
+			tc.booms.add(new Boom(t.getCx(),t.getCy(),tc));
+			return true;
+		}
 		return false;
 	}
 	
@@ -130,22 +133,64 @@ public class Missile {
 	 * 判断是否打中所有坦克
 	 */
 	public boolean hitTanks(ArrayList<Tank> tanks) {
-			for(int j =0;j < tanks.size();j++) {
-				if(hitMyTank(tanks.get(j))) {
-					return true;
-				}
-			}	
+		for(int j =0;j < tanks.size();j++) {
+			if(collidesWithTank(tanks.get(j))) {
+				return true;
+			}
+		}	
 		return false;
 	}
 
 	/*
-	 * 判断是否打中墙
+	 * 分离方法
 	 */
-	public boolean hitWall(Wall w) {
-		if(this.live && this.getRect().intersects(w.getRect())) {
-			this.live =false;
-			return true;
+	/*
+	 * 分离方法
+	 */
+	public void separate(MininumTranslationVector mtv) {
+		float dx,dy;
+		float theta = 0;
+		
+		if(mtv.axis.x == 0) {
+			theta = (float)(Math.PI/2);
+		}else {
+			theta = (float)(Math.atan(mtv.axis.y / mtv.axis.x));
 		}
-		return false;
+		
+		dy = (float)(mtv.overlap * Math.sin(theta));
+		dx = (float)(mtv.overlap * Math.cos(theta));
+
+		if (mtv.axis.x < 0 && dx > 0 || mtv.axis.x > 0 && dx < 0) dx = -dx; // account for negative angle
+		if (mtv.axis.y < 0 && dy > 0 || mtv.axis.y > 0 && dy < 0) dy = -dy;
+		
+		x += dx;
+		y += dy;
+		
 	}
+	
+	/*
+	 * 反弹方法
+	 */
+	public void  bounce(MininumTranslationVector mtv, MyShape shape,int bounceCoefficient) {//bounceCoefficient反弹系数
+		Vector velocityVector = new Vector(new MyPoint(speedV.x, speedV.y));
+		   Vector velocityUnitVector = velocityVector.normalize();
+		   float  velocityVectorMagnitude = velocityVector.getMagnitude();
+		   Vector reflectAxis = new Vector();
+		   Vector point;
+
+		   checkMTVAxisDirection(mtv, shape);
+		   
+
+		      if (mtv.axis != null) {
+		         reflectAxis = mtv.axis.perpendicular();
+		      }
+
+		      separate(mtv);
+
+		      point = velocityUnitVector.reflect(reflectAxis);
+		      
+		      speedV.x = point.x * velocityVectorMagnitude * bounceCoefficient;
+		      speedV.y = point.y * velocityVectorMagnitude * bounceCoefficient;
+	}
+	
 }

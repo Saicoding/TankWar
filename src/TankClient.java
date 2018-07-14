@@ -7,6 +7,7 @@ import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.Point;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
@@ -24,7 +25,10 @@ import java.util.Random;
  * 2018年7月8日 下午11:24:44
  */
 public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方法，建议用这种方式
-
+	
+	public int enemyTankNum = 3;//敌人坦克数量
+	public int myTankNum = 2;//我的坦克数量
+	public int totalEnemyTankNum = 500;//库存坦克
 	private static final long serialVersionUID = 1L;
 	public static final int GAME_WIDTH = 1400 ;//游戏屏幕高度
 	public static final int GAME_HEIGHT = 900 ;//游戏屏幕宽度
@@ -38,13 +42,11 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	static boolean keyUpPressed = false;//设置默认按键状态
 	static boolean keyDownPressed = false;//设置默认按键状态
 	
-	Wall w1 = new Wall(300,200,20,150,this),w2 = new Wall(500,100,300,20,this);
+	Wall w1 = new Wall(this),w2 = new Wall(this);
 	
 	Blood bb = new Blood();
 	
-	public int totalEnemyTankNum = 0;
 	public int time = 0;
-	private int enemyTankName = 0;
 	
 	ArrayList<Tank> myTanks =new ArrayList<Tank>();//自己坦克数组
 	ArrayList<Tank> enemyTanks = new ArrayList<Tank>();//敌人坦克数组
@@ -62,15 +64,16 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 		tc.launchFream();
 	}
 
-
 	public void paint(Graphics g) {
 		//画子弹
 		for(int i = 0 ;i<missiles.size();i++) {
 			Missile m = missiles.get(i);
+			m.collidesWithScreen();
 			m.hitTanks(enemyTanks);//可以打敌人
 //			m.hitTanks(myTanks);//敌人可以打我的坦克
-			m.hitWall(w1);
-			m.hitWall(w2);
+			
+//			m.hitWall(w1);
+//			m.hitWall(w2);
 			m.draw(g);
 		}
 		
@@ -86,11 +89,8 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 			}
 			int space =0;
 			if(pos == 2) space =52;	
-			Tank et =new Tank((GAME_WIDTH-120)/2*pos-space+20,40,colorList,false,5,90,this);
-			String name =enemyTankName+"";
-			enemyTankName++;
+			Tank et =new Tank((GAME_WIDTH-120)/2*pos-space+40,65,colorList,false,5,90,this);
 			totalEnemyTankNum--;
-			et.setName(name);
 			enemyTanks.add(et);
 		}
 		
@@ -98,13 +98,16 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 		
 		for(int i = 0;i<enemyTanks.size();i++) {
 			Tank enemyTank =enemyTanks.get(i);
+			enemyTank.collidesWithScreen();
+//			enemyTank.collidesWithWall(w1);
+//			enemyTank.collidesWithWall(w2);		
+			enemyTank.collidesWithTanks(myTanks);
+			enemyTank.collidesWithTanks(enemyTanks);
 			enemyTank.draw(g);
-//			enemyTank.collidesWithTanks(myTanks);
-			//enemyTank.collidesWithTanks(enemyTanks);
 			Graphics2D g2 = (Graphics2D)g;
 			Color c = g2.getColor();
 			g2.setColor(Color.GREEN);
-			g2.draw(enemyTank.createPath());
+//			g2.draw(enemyTank.createPath());
 			g2.setColor(c);
 		}
 		
@@ -115,6 +118,9 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 				b.draw(g);
 			}
 		}
+		//画墙
+		w1.draw(g);
+		w2.draw(g);
 		
 		//画自己的坦克
 		for(int i = 0;i<myTanks.size();i++) {
@@ -122,14 +128,15 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 			myTank.collidesWithWall(w1);
 			myTank.collidesWithWall(w2);
 			myTank.collidesWithTanks(myTanks);
-//			myTank.collidesWithTanks(enemyTanks);
+			myTank.collidesWithTanks(enemyTanks);
+			myTank.collidesWithScreen();
 			myTank.draw(g);			
 			myTank.eat(bb);//吃血块
 			
 			Graphics2D g2 = (Graphics2D)g;
 			Color c = g2.getColor();
 			g2.setColor(Color.GREEN);
-			g2.draw(myTank.createPath());
+//			g2.draw(myTank.createPath());
 			if(i==0) {
 			
 			g.drawString("坦克角度:" + myTank.angle, 10, 110);//坦克角度
@@ -138,9 +145,7 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 			}
 			g2.setColor(c);
 		}
-		//画墙
-		w1.draw(g);
-		w2.draw(g);
+
 		
 		//画血块
 		bb.draw(g);
@@ -181,7 +186,7 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	 */
 	public void launchFream() {
 		//添加自己坦克
-		for(int i=0;i<2;i++) {
+		for(int i=0;i<myTankNum;i++) {
 			ArrayList<Color> colorList = new ArrayList<Color>();
 			if(i == 0) {
 				for(int j =0 ;j<25;j++) {
@@ -210,10 +215,11 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 				colorList.add(new Color(255,0,0));//19
 			}
 			Tank t = new Tank(300*(i+1),GAME_HEIGHT-100,colorList,true,7,0,this);
+			if(i==0)t.flag=1;//测试用
 			myTanks.add(t);			
 		}	
 		//添加敌人坦克
-		for(int i=0;i<3;i++) {
+		for(int i=0;i<enemyTankNum;i++) {
 			ArrayList<Color> colorList = new ArrayList<Color>();
 			for(int j =0 ;j<25;j++) {
 				colorList.add(new Color(random.nextInt(150),random.nextInt(150),random.nextInt(150)));
@@ -221,10 +227,9 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 			int space =0;
 			if(i == 2) space =52;	
 			Tank et =new Tank((GAME_WIDTH-120)/2*i-space+40,65,colorList,false,5,90,this);
-			totalEnemyTankNum--;
 			enemyTanks.add(et);
 		}
-		
+
 		 this.setLocation(GAME_POSITION_X,GAME_POSITION_Y);
 		 this.setSize(GAME_WIDTH,GAME_HEIGHT);
 		 

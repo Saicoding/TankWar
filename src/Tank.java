@@ -14,20 +14,23 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Random;
 
 
 public class Tank extends MyPolygon{
-	private int lastAngle=0;//上一次的坐标和中心坐标
+	private int lastCx,lastCy,lastAngle=0;//上一次的坐标和中心坐标
+	private Vector lastPosition = new Vector();
 	private int life = 0;//坦克生命值
 	public int angle = 0;//坦克角度
 	
-	private int fullLife = 10;//坦克最大生命值
+	public int flag;//测试用flag
 	
-	private BloodBar bb = new BloodBar();
+//	private int fullLife = 10;//坦克最大生命值
+	
+//	private BloodBar bb = new BloodBar();
 	
 	private ArrayList<Color> colorList = null;//定义坦克颜色
-	private String name;//坦克名字	
 	
 	private boolean live = true;
 	private int speed;//速度
@@ -50,14 +53,18 @@ public class Tank extends MyPolygon{
 	
 	public int missileWidth = 10;//该坦克弹管宽度
 	public int missileHeight = 10;//该坦克弹管高度
-	public int missileSpeed = 5;//子弹比坦克快的数字
 
-	private int lvdaiPosition = 5;//履带位置
+	private int leftTrackPosition = 5;//履带位置
+	private int rightTrackPosition = 5;//履带位置
 	private int lvdaiSpace = 6;//履带条纹间隙
+	private int trackSpeed =2;//履带条纹变化频率
 	private int fengxi = 1;//车身缝隙
 	
-	private int myTankShotSpeend =15;//我的坦克射击速度
+	private int myTankShotSpeend = 7;//我的坦克射击速度
 	private int myMissileSize = 40;//我的坦克子弹大小
+
+	private int enemyTankMissileSpeed = 5;//敌人坦克子弹速度
+	private int enemyTankMissileSize = 10;//敌人坦克子弹大小
 	
 	private boolean good =false;//好坏坦克
 	private boolean bL = false,bR = false,bF = false,bB = false;//定义初始四个方向键按下状态
@@ -78,7 +85,7 @@ public class Tank extends MyPolygon{
 	 * 构造函数
 	 */
 	
-	
+
 	public Tank(int cx, int cy, ArrayList<Color> colorList,boolean good,int speed) {//好坏坦克用good区分
 		this.cx = cx;
 		this.cy = cy;
@@ -118,10 +125,10 @@ public class Tank extends MyPolygon{
 		speedV.y = sinv*speed;
 	}
 	public void initPoints() {
-		this.points.add(clockWiseTurn(new Point(cx-height/2,cy-width/2),new Point(cx,cy)));
-		this.points.add(clockWiseTurn(new Point(cx+height/2,cy-width/2),new Point(cx,cy)));
-		this.points.add(clockWiseTurn(new Point(cx+height/2,cy+width/2),new Point(cx,cy)));
-		this.points.add(clockWiseTurn(new Point(cx-height/2,cy+width/2),new Point(cx,cy)));
+		this.points.add(clockWiseTurn(new MyPoint(cx-height/2,cy-width/2),new MyPoint(cx,cy)));
+		this.points.add(clockWiseTurn(new MyPoint(cx+height/2,cy-width/2),new MyPoint(cx,cy)));
+		this.points.add(clockWiseTurn(new MyPoint(cx+height/2,cy+width/2),new MyPoint(cx,cy)));
+		this.points.add(clockWiseTurn(new MyPoint(cx-height/2,cy+width/2),new MyPoint(cx,cy)));
 	}
 	/*
 	 * 根据不同坦克设置坦克的移动方式
@@ -131,6 +138,10 @@ public class Tank extends MyPolygon{
 			
 		}else {
 			if(moveStep <=0) {//如果前进步数没有了,就随机一个角度,开始转向
+				if(bB) {//倒退一次后将后退状态改为前进状态
+					bB = false;
+					bF = true;
+				}
 				randomTurnAngle = random.nextInt(360)-180;//随机一个角度
 				moveStep =random.nextInt(50)+20;
 				turning = true;
@@ -155,11 +166,22 @@ public class Tank extends MyPolygon{
 				randomTurnAngle++;
 			}else if(randomTurnAngle ==0) {
 				turning =false;//如果randomAngle是零,说明转弯结束
-				moveStep = random.nextInt(200)+50;
+				moveStep = random.nextInt(100)+20;
 			}
 		}
 		if(angle!=lastAngle){
 			changePointTurned();//每次改变角度后都改指定坦克碰撞模型的点	
+			if(angle >lastAngle) {//右转
+				this.leftTrackPosition -=trackSpeed;
+				this.rightTrackPosition +=trackSpeed;
+				if(this.leftTrackPosition <0)this.leftTrackPosition =6;					
+				if(this.rightTrackPosition >6)this.rightTrackPosition =0;
+			}else {
+				this.leftTrackPosition +=trackSpeed;
+				this.rightTrackPosition -=trackSpeed;
+				if(this.leftTrackPosition >6)this.leftTrackPosition =0;					
+				if(this.rightTrackPosition <0)this.rightTrackPosition =6;
+			}
 		}
 		
 	}
@@ -168,6 +190,7 @@ public class Tank extends MyPolygon{
 	 */
 	public void moveForword() {
 		if(turning) return;//turning是敌人转悠属性,自己坦克turning初始值是false,所以友军这里永远不执行
+		setSpeedV(speedV.x,speedV.y);//每次前后移动都设置下速度方向
 		update(speedV.x,speedV.y);
 		if(!good) {
 			moveStep--;//敌军每移动一次,计步减一
@@ -180,19 +203,24 @@ public class Tank extends MyPolygon{
 	 */
 	public void moveBack() {
 		if(turning) return;
-		update(-speedV.x,-speedV.y);
+		setSpeedV(-speedV.x,-speedV.y);//每次前后移动都设置下速度方向
+		update(speedV.x,speedV.y);
+		if(!good) {
+			moveStep--;//敌军每移动一次,计步减一
+			fireStep--;//敌军每移动一次,发火计步减一
+		}
 	}
 	public void enemyFire() {
 		if(good)return;
 		if(fireStep <=0) {
-			tc.missiles.add(fire(2,5));
+			tc.missiles.add(fire(enemyTankMissileSpeed,enemyTankMissileSize));
 			fireStep = random.nextInt(50)+10;
 		}
 	}
 	/*
 	 * 得到某个点从零度绕到当前前角度后的点
 	 */	
-	public Point clockWiseTurn(Point p,Point cp) {
+	public MyPoint clockWiseTurn(MyPoint p,MyPoint cp) {
 	    // calc arc   
 		float l = (float) ((angle * Math.PI) / 180);  
 	      
@@ -203,24 +231,24 @@ public class Tank extends MyPolygon{
 	    // calc new Point  
 		float newX = (p.x - cp.x) * cosv - (p.y - cp.y) * sinv + cp.x;  
 		float newY = (p.x - cp.x) * sinv + (p.y - cp.y) * cosv + cp.y;  
-	    return new Point((int) newX, (int) newY);  
+	    return new MyPoint((int) newX, (int) newY);  
 	}
 
 	/*
 	 * 
 	 */
 	public void changePointTurned() {
-		ArrayList<Point> mypoints =  new ArrayList<Point>();
-		mypoints.add(new Point(cx-height/2,cy-width/2));
-		mypoints.add(new Point(cx+height/2,cy-width/2));
-		mypoints.add(new Point(cx+height/2,cy+width/2));
-		mypoints.add(new Point(cx-height/2,cy+width/2));
+		ArrayList<MyPoint> mypoints =  new ArrayList<MyPoint>();
+		mypoints.add(new MyPoint(cx-height/2,cy-width/2));
+		mypoints.add(new MyPoint(cx+height/2,cy-width/2));
+		mypoints.add(new MyPoint(cx+height/2,cy+width/2));
+		mypoints.add(new MyPoint(cx-height/2,cy+width/2));
 		
 		for(int i = 0 ; i< mypoints.size();i++) {
-			Point p = points.get(i);	
-			Point mp = mypoints.get(i);
-			p.x = clockWiseTurn(mp,new Point(cx,cy)).x;
-			p.y = clockWiseTurn(mp,new Point(cx,cy)).y;
+			MyPoint p = points.get(i);	
+			MyPoint mp = mypoints.get(i);
+			p.x = clockWiseTurn(mp,new MyPoint(cx,cy)).x;
+			p.y = clockWiseTurn(mp,new MyPoint(cx,cy)).y;
 		}	
 	}
 	
@@ -228,34 +256,78 @@ public class Tank extends MyPolygon{
 	 * 坦克移动方法
 	 */
 	public void move() {
+		lastCx = cx;
+		lastCy = cy;
+		lastAngle = angle;
+		lastPosition.x = cx;
+		lastPosition.y = cy;
+		
 		initMove() ;
 		turn();//先处理转弯,这里敌人必须转弯后才能移动
 		setTurnedSpeedV();//每次转向都要设置速度向量
 		
 		if(!stop) {//如果不是停止状态,就有两种可能,一是向前,一是向后
 			if(bF) {
-				moveForword();				
-			}else {
+				moveForword();	
+				this.leftTrackPosition -=trackSpeed;
+				this.rightTrackPosition -=trackSpeed;
+				if(this.leftTrackPosition <0)this.leftTrackPosition =6;					
+				if(this.rightTrackPosition <0)this.rightTrackPosition =6;
+					
+			}else if(bB){
 				moveBack();
+				this.leftTrackPosition +=trackSpeed;
+				this.rightTrackPosition +=trackSpeed;
+				if(this.leftTrackPosition >6)this.leftTrackPosition =0;					
+				if(this.rightTrackPosition >6)this.rightTrackPosition =0;
 			}
 			//坦克是要是运动,肯定就更新履带
-			this.lvdaiPosition -=2;
-			if(this.lvdaiPosition <0)
-				this.lvdaiPosition =6;
 		}
 		enemyFire();
 
 	}
+	/*
+	 * 分离方法
+	 */
+	public void separate(MininumTranslationVector mtv) {
+		float dx,dy;
+		float theta = 0;
+		
+		if(mtv.axis.x == 0) {
+			theta = (float)(Math.PI/2);
+		}else {
+			theta = (float)(Math.atan(mtv.axis.y / mtv.axis.x));
+		}
+		
+		dy = (float)(mtv.overlap * Math.sin(theta));
+		dx = (float)(mtv.overlap * Math.cos(theta));
 
+		if (mtv.axis.x < 0 && dx > 0 || mtv.axis.x > 0 && dx < 0) dx = -dx; // account for negative angle
+		if (mtv.axis.y < 0 && dy > 0 || mtv.axis.y > 0 && dy < 0) dy = -dy;
+		
+		setSpeedV(speedV.x,speedV.y);//每次前后移动都设置下速度方向
+		update(dx,dy);
+	}
+	
+	
+	/*
+	 * 回退上一帧状态
+	 */
+	public void goBackLastFrame() {
+		cx = lastCx;
+		cy = lastCy;
+		angle = lastAngle;
+		changePointTurned();
+	}
 
 	/*
 	 * 更新所有点
 	 */
-	private void update(double dx,double dy) {
+ 	private void update(double dx,double dy) {
 		cx += dx;
 		cy += dy;
 		for(int i = 0 ; i< points.size();i++) {
-			Point p = points.get(i);
+			MyPoint p = points.get(i);
 			p.x += dx;
 			p.y += dy;
 		}
@@ -291,8 +363,6 @@ public class Tank extends MyPolygon{
 	 * 坦克模型
 	 */
 	public void tankModal(Graphics g,int angel) {
-		int pw = 2;//炮筒宽度
-		int ph = th/2;
 
 		Graphics2D g2 = (Graphics2D) g;
 		Color c = g2.getColor();
@@ -391,14 +461,16 @@ public class Tank extends MyPolygon{
 		g2.setStroke(s);
 		g2.setColor(colorList.get(19));
 		//画履带格子
-		for(int i = 0 ;this.lvdaiPosition+i*lvdaiSpace < th;i++) {
-			Point p1 = new Point(cx-tw-mw/2+fengxi,cy-th/2+i*lvdaiSpace +this.lvdaiPosition);
-			Point p2 = new Point(cx-mw/2,cy-th/2+i*lvdaiSpace +this.lvdaiPosition);
-			Point p3 = new Point(cx+mw/2+fengxi, cy-th/2+i*lvdaiSpace +this.lvdaiPosition);
-			Point p4 = new Point(cx+mw/2+tw, cy-th/2+i*lvdaiSpace +this.lvdaiPosition);
+		for(int i = 0 ;this.leftTrackPosition+i*lvdaiSpace < th;i++) {
+			Point p1 = new Point(cx-tw-mw/2+fengxi,cy-th/2+i*lvdaiSpace +this.leftTrackPosition);
+			Point p2 = new Point(cx-mw/2,cy-th/2+i*lvdaiSpace +this.leftTrackPosition);
 			Line2D line1 = new Line2D.Double(p1.x,p1.y,p2.x,p2.y);
-			Line2D line2 = new Line2D.Double(p3.x,p3.y,p4.x,p4.y);
 			g2.draw(line1);
+		}
+		for(int i = 0 ;this.rightTrackPosition+i*lvdaiSpace < th;i++) {
+			Point p3 = new Point(cx+mw/2+fengxi, cy-th/2+i*lvdaiSpace +this.rightTrackPosition);
+			Point p4 = new Point(cx+mw/2+tw, cy-th/2+i*lvdaiSpace +this.rightTrackPosition);
+			Line2D line2 = new Line2D.Double(p3.x,p3.y,p4.x,p4.y);
 			g2.draw(line2);
 		}
 		g2.rotate(Math.toRadians(-angel),cx,cy);//恢复旋转
@@ -411,20 +483,20 @@ public class Tank extends MyPolygon{
 	 * 坦克盖路径
 	 */
 	private Shape tankTopDraw() {
-	    Point p1=new Point(cx-10,cy+10);
-	    Point p2=new Point(cx+10,cy+10);
+		MyPoint p1=new MyPoint(cx-10,cy+10);
+		MyPoint p2=new MyPoint(cx+10,cy+10);
 	    
-	    Point p3=new Point(cx+20,cy-6);
-	    Point p4=new Point(cx+5,cy-21);
-	    Point p5=new Point(cx+2,cy-26);
+		MyPoint p3=new MyPoint(cx+20,cy-6);
+		MyPoint p4=new MyPoint(cx+5,cy-21);
+		MyPoint p5=new MyPoint(cx+2,cy-26);
 	   
-	    Point p6=new Point(cx+pw/2,cy-ph);
+		MyPoint p6=new MyPoint(cx+pw/2,cy-ph);
 	    
-	    Point p7=new Point(cx-pw/2,cy-ph);
-	    Point p8=new Point(cx-2,cy-26);
-	    Point p9=new Point(cx-5,cy-21);
-	    Point p10=new Point(cx-20,cy-6);
-	    Point p11=new Point(cx-10,cy+10);
+		MyPoint p7=new MyPoint(cx-pw/2,cy-ph);
+		MyPoint p8=new MyPoint(cx-2,cy-26);
+		MyPoint p9=new MyPoint(cx-5,cy-21);
+		MyPoint p10=new MyPoint(cx-20,cy-6);
+		MyPoint p11=new MyPoint(cx-10,cy+10);
 	    
 	    GeneralPath gp=new GeneralPath();    //shape的子类，表示一个形状
 	    gp.append(new Line2D.Double(p1.x,p1.y,p2.x,p2.y),true);   //在形状中添加一条线，即Line2D
@@ -444,64 +516,85 @@ public class Tank extends MyPolygon{
 	/*
 	 * 坦克血条内部类
 	 */
-	private class BloodBar{
-		public void draw(Graphics2D g2) {
-			Color c = g2.getColor();
-			g2.setColor(new Color(139,0,0));
-			if(life <=3) {//如果血量小于3了就开始闪
-				g2.setColor(new Color(random.nextInt(255),random.nextInt(255),random.nextInt(255)));
-			}
-			g2.drawRect(getCx()-height/2,getCy()-height/2-23, height,20 );
-			g2.fillRect(getCx()-height/2,getCy()-height/2-23, height/fullLife*life,20);
-			g2.setColor(c);
-		}
-	}
+//	private class BloodBar{
+//		public void draw(Graphics2D g2) {
+//			Color c = g2.getColor();
+//			g2.setColor(new Color(139,0,0));
+//			if(life <=3) {//如果血量小于3了就开始闪
+//				g2.setColor(new Color(random.nextInt(255),random.nextInt(255),random.nextInt(255)));
+//			}
+//			g2.drawRect(getCx()-height/2,getCy()-height/2-23, height,20 );
+//			g2.fillRect(getCx()-height/2,getCy()-height/2-23, height/fullLife*life,20);
+//			g2.setColor(c);
+//		}
+//	}
 
 // ******************************************************碰撞检测
+	public void enemyCollidesWithWallAndTank() {
+		if(!good) {//如果是敌人坦克
+			turning = false;
+			if(bB) {//如果是后退状态
+				bB = false;
+				bF = true;
+				moveStep = random.nextInt(5)+3;
+			}else {
+				bB = true;
+				bF = false;
+				moveStep = random.nextInt(5)+3;
+			}
+		}
+	}
 	/*
 	 * 碰撞检测
 	 */
-	public boolean collidesWithWall(Wall w) {
-		//判断如果是碰撞状态,就恢复到上一次状态,如果此时还是碰撞状态,就根据方向来进行移动
-//		if(this.live && this.getRect().intersects(w.getRect())) {
-//			this.stay();	
-//			return true;
-//		}
-		return false;
+	public void collidesWithWall(Wall w) {
+		Vector position = new Vector(new MyPoint(cx,cy));
+		Vector displacement = position.subTract(lastPosition);
+		MininumTranslationVector mtv=collidesWith(w,displacement);
+		
+		if(mtv.axis !=null && mtv.overlap !=0) {
+
+			if(good && flag==1) {
+			System.out.println(mtv.axis.x+"||"+mtv.axis.y);
+			}	
+			goBackLastFrame();
+			enemyCollidesWithWallAndTank();
+		}
+	}
+	
+	public void collidesWithScreen() {
+		if(getMostXY("left", "min") < 0 || getMostXY("right", "max")>TankClient.GAME_WIDTH || getMostXY("top", "min")<24||getMostXY("bottom", "max")>TankClient.GAME_HEIGHT) {
+			goBackLastFrame();
+			enemyCollidesWithWallAndTank();
+		}else {//如果没发生碰撞
+
+		}
 	}
 
+	
+	public boolean collidesWithTank(Tank t) {
+		Vector position = new Vector(new MyPoint(cx,cy));
+		Vector displacement = position.subTract(lastPosition);
+		MininumTranslationVector mtv=collidesWith(t,displacement );
+
+		return mtv.axis !=null && mtv.overlap !=0;
+	}
 	/*
 	 * 判断坦克之间相撞
 	 */
 	public void collidesWithTanks(ArrayList<Tank> tanks) {
 		//判断如果是碰撞状态,就恢复到上一次状态
-		for(int i = 1; i < tanks.size(); i++) {
+		for(int i = 0; i < tanks.size(); i++) {
 			Tank t = tanks.get(i);
 			if(this != t) {
-//				System.out.println(collidesWith(t).axis.x);
-				separate(collidesWith(t));
+				if(collidesWithTank(t)) {
+					goBackLastFrame();	
+					enemyCollidesWithWallAndTank();
+				}
 			}	
 		}
-	}	
-	
-	public void separate(MininumTranslationVector mtv) {
-		double dx =0,dy=0;
-		double theta=0;
-		System.out.println(mtv.axis!=null || mtv.overlap!=0);
-//		if(mtv.axis !=null) {
-//			
-//			if(mtv.axis.x ==0) {
-//				theta = Math.PI/2;
-//			}else {
-//				theta = Math.atan(mtv.axis.y/mtv.axis.x);
-//			}
-//			dx = (int)(mtv.overlap*Math.cos(theta));
-//			dy = (int)(mtv.overlap*Math.sin(theta));
-//			System.out.println(dx+"||"+dy);
-//		}
-//		update(-dx,-dy);
-		
-	}
+	}		
+
 //****************************************************************************************
 
 	/*
@@ -520,14 +613,14 @@ public class Tank extends MyPolygon{
 	 * 射击,用面向对象的思想，当坦克射击时会射出一个子弹
 	 */
 	public Missile fire(int speed,int width) {
-		Missile m =new Missile(cx, cy, this.good,this.angle, speed,width,this.tc);//炮筒方向是哪个，子弹方向就是哪个
+		Missile m =new Missile((int)getPtPoint().x, (int)getPtPoint().y, good,angle, speed,width,tc);//炮筒方向是哪个，子弹方向就是哪个
 		return m;
 	}
 	/*
 	 * 重载fire方法
 	 */
 	public Missile fire(int speed,int width,int angle) {
-		Missile m =new Missile(cx, cy, this.good,angle, speed,width,this.tc);//炮筒方向是哪个，子弹方向就是哪个
+		Missile m =new Missile((int)getPtPoint().x, (int)getPtPoint().y, good,angle, speed,width,tc);//炮筒方向是哪个，子弹方向就是哪个
 		return m;
 	}
 
@@ -654,12 +747,11 @@ public class Tank extends MyPolygon{
 
 //快捷方法-------------------------------------------------------------
 	public void setTurnedSpeedV() {		
-//	    Point p = clockWiseTurn(new Point(5,0), new Point(0,0));
-		float l = (float)((angle * Math.PI)/ 180);  
-		speedV.x = (float)(Math.cos(l)*speed);
-		speedV.y = (float)(Math.sin(l)*speed);
+		float l = (float)((angle * Math.PI)/ 180);
+		speedV.x = (int)(Math.cos(l)*speed);
+		speedV.y = (int)(Math.sin(l)*speed);
+		
 	}
-	
 	public float myCos(float data) {
 		float l = (float)((angle * Math.PI) / 180);  	      
 		float cosv = (float) Math.cos(l);  
@@ -719,26 +811,35 @@ public class Tank extends MyPolygon{
 	public boolean isLive() {
 		return live;
 	}
-	/*
-	 * 设置坦克名称
-	 */
-	public void setName(String name) {
-		this.name = name;
-	}
+
 	public void setStop(boolean stop) {
 		this.stop = stop;
 	}
 	/*
-	 * 得到炮筒中心x
+	 * 得到炮筒中心点
 	 */
-	public int getPtcx() {
-		return (int)(getCx() +  ph * Math.cos(angle * 3.14 / 180));
+	public MyPoint getPtPoint() {
+		MyPoint pt = clockWiseTurn(new MyPoint(cx+ph,cy), new MyPoint(cx,cy));
+		return pt;
+	}
+	
+	public void setSpeedV(float x,float y) {
+		speedV.x = x;
+		speedV.y = y;
 	}
 	/*
-	 * 得到炮筒中心y
+	 * 得到当前最左或者最右或者最上或者最下的点的值
 	 */
-	public int getPtcy() {
-		return (int)(getCy() + ph* Math.sin(angle *3.14 /180));
-	}
+	public float getMostXY(String dir,String minOrMax) {
+		ArrayList<Float> allPoint = new ArrayList<Float>();//声明一个集合装所有x
+		for(int i=0;i<points.size();i++) {
+			MyPoint p = points.get(i);
+			if(dir == "left" || dir == "right")allPoint.add(p.x);
+			else if(dir == "top" || dir == "bottom")allPoint.add(p.y);			
+		}
+		if( minOrMax == "min") return Collections.min(allPoint);
 
+		else if(minOrMax == "max")return Collections.max(allPoint);
+		return 0;
+	}
 }
