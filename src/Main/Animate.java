@@ -6,14 +6,14 @@ import java.awt.Toolkit;
 import java.awt.image.ImageObserver;
 
 public class Animate{
-	public int x,y,picNum;
+	public float x,y,picNum;
 	private ImageObserver t;
 	private int step = 1;
 	private int time = 0;
 	String path;
 	public boolean over = false;
 	
-	public Animate(int x,int y,String path,int picNum,ImageObserver t){
+	public Animate(float x,float y,String path,int picNum,ImageObserver t){
 		this.x = x;
 		this.y = y;
 		this.picNum = picNum;
@@ -32,11 +32,11 @@ public class Animate{
 		Image img = kit.getImage("img/"+path+"/"+step+".png");
 		int iw = img.getWidth(t);
 		int ih = img.getHeight(t);
-		g2.drawImage(img,x-iw/2,y-ih/2,t);	
+		g2.drawImage(img,(int)(x-iw/2),(int)(y-ih/2),t);	
 		
 		//time每7次换一次画面
 		this.time++;
-		if(this.time>7) {
+		if(this.time>3) {
 			this.step++;
 			this.time =0;
 		}

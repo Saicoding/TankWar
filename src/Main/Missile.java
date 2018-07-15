@@ -5,6 +5,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
+import java.awt.geom.Ellipse2D;
 import java.awt.image.ImageObserver;
 import java.util.ArrayList;
 
@@ -24,7 +25,7 @@ import shape.Vector;
  */
 public class Missile extends MyCircle{
 	
-	private int angle;
+	private float angle;
 	private boolean good;//子弹阵营	
 	private boolean live = true;//一new出来肯定是活着的
 	public Vector lastPosition = new Vector();
@@ -46,7 +47,7 @@ public class Missile extends MyCircle{
 	/*
 	 * 构造方法
 	 */
-	public Missile(int x, int y,int radius ,boolean good, int angle,int speed) {
+	public Missile(float x, float y,int radius ,boolean good, float angle,int speed) {
 		this.x = x;
 		this.y = y;
 		this.radius = radius;
@@ -57,7 +58,7 @@ public class Missile extends MyCircle{
 	/*
 	 * 带引用的构造方法
 	 */
-	public  Missile(int x ,int y,int radius ,boolean good,int angle ,int speed,TankClient tc) {
+	public  Missile(int x ,int y,int radius ,boolean good,float angle ,int speed,TankClient tc) {
 		this(x,y,radius,good,angle,speed);
 		this.tc = tc;
 		initSpeedV();
@@ -88,7 +89,8 @@ public class Missile extends MyCircle{
 		}
 		Color c = g2.getColor();
 		g2.setColor(color);
-		g2.fillOval(x-radius, y-radius, 2*radius, 2*radius);
+		Ellipse2D ellipse1 = new Ellipse2D.Double(x-radius, y-radius, 2*radius, 2*radius);
+		g2.fill(ellipse1);
 		g2.setColor(c);
 		
 		move();

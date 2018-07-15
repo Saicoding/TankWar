@@ -1,9 +1,9 @@
 package shape;
 
 public class BoundingBox {
-	int left,top,width,height;
+	float left,top,width,height;
 
-	public BoundingBox(int left, int top, int width, int height) {
+	public BoundingBox(float left, float top, float width, float height) {
 		this.left = left;
 		this.top = top;
 		this.width = width;

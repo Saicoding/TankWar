@@ -2,8 +2,8 @@ package shape;
 import java.util.ArrayList;
 
 public class MyShape {
-	public int x;
-	public int y;
+	public float x;
+	public float y;
 	public Vector speedV = new Vector();
 	public int BIG_NUMBER = 10000;
 	public int radius;
