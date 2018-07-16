@@ -30,9 +30,11 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	
 	public int enemyTankNum = 3;//敌人坦克数量
 	public int myTankNum = 2;//我的坦克数量
-	public int totalEnemyTankNum = 30;//库存坦克
+	public int totalEnemyTankNum = 11;//库存坦克
 	public int myTankSpeed = 12;//我的坦克速度
 	public int enemyTankSpeed = 7;//敌人坦克速度
+	public int tankName = 1;//坦克起始名字
+	
 	public long lastTime;
 	public float elapseTime;
 	private static final long serialVersionUID = 1L;
@@ -111,8 +113,10 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 			int space =0;
 			if(pos == 2) space =52;	
 			Tank et =new Tank((GAME_WIDTH-120)/2*pos-space+40,65,colorList,false,enemyTankSpeed,90,this);
+			et.name = tankName+"";		
 			totalEnemyTankNum--;
 			enemyTanks.add(et);
+			tankName++;
 		}
 		
 		//画敌人坦克
@@ -248,6 +252,8 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 				colorList.add(new Color(255,0,0));//19
 			}
 			Tank t = new Tank(300*(i+1),GAME_HEIGHT-100,colorList,true,myTankSpeed,-90,this);
+			if(i == 0 ) t.name = "冶";
+			if(i == 1) t.name = "思";
 			if(i==0)t.flag=1;//测试用
 			myTanks.add(t);			
 		}	
@@ -260,7 +266,9 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 			int space =0;
 			if(i == 2) space =52;	
 			Tank et =new Tank((GAME_WIDTH-120)/2*i-space+40,65,colorList,false,enemyTankSpeed,90,this);
+			et.name = tankName+"";
 			enemyTanks.add(et);
+			tankName++;
 		}
 
 		 this.setLocation(GAME_POSITION_X,GAME_POSITION_Y);

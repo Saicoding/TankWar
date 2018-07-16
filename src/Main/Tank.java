@@ -1,10 +1,10 @@
 package Main;
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Stroke;
@@ -29,14 +29,18 @@ import shape.Vector;
 public class Tank extends MyPolygon{
 	private float lastX = 700,lastY=600,lastAngle=0;//上一次的坐标和中心坐标
 	private Vector lastPosition = new Vector();
-	private int life = 0;//坦克生命值
+
 	public float angle = 0;//坦克角度
-	
+	public float ptAngle =0;//炮筒角度
+	public String name;
 	public int flag;//测试用flag
 	
-//	private int fullLife = 10;//坦克最大生命值
+	private int life = 0;//坦克生命值
+	private int fullLife ;//坦克最大生命值
+	private int missilesNum;//坦克弹药
+	private int fullMissilesNum ;//坦克弹药库存
 	
-//	private BloodBar bb = new BloodBar();
+	private BloodBar bb = new BloodBar();
 	
 	private ArrayList<Color> colorList = null;//定义坦克颜色
 	
@@ -69,8 +73,8 @@ public class Tank extends MyPolygon{
 	private int myMissileSize = 20;//我的坦克子弹大小
 	private int myTankTurnSpeed = 4;//我的坦克转弯速度
 
-	private int enemyTankMissileSpeed = 7;//敌人坦克子弹速度
-	private int enemyTankMissileSize = 10;//敌人坦克子弹大小
+	private int enemyTankMissileSpeed = 14;//敌人坦克子弹速度
+	private int enemyTankMissileSize = 5;//敌人坦克子弹大小
 	private int enemyTankTurnSpeed = 1;//敌人坦克转弯速度
 	
 	private boolean good =false;//好坏坦克
@@ -100,10 +104,17 @@ public class Tank extends MyPolygon{
 		
 		if(good) {
 			this.life=10;//如果是友 生命初始是10
+			this.fullLife = life;//最大生命;
+			this.missilesNum = 100;//初始弹药数量
+			this.fullMissilesNum = missilesNum;//初始弹药库
 			this.stop = true;//友军初始停止
+			
 		}
 		else {
-			this.life =1;//如果是敌人,生命初始是1
+			this.life =8;//如果是敌人,生命初始是1
+			this.fullLife = life;//最大生命
+			this.missilesNum = 20;//初始弹药数量
+			this.fullMissilesNum = missilesNum;//初始弹药库
 			this.stop =false;//敌人初始不停止
 			this.bF = true;//如果是敌人,坦克初始向前
 		}
@@ -117,6 +128,7 @@ public class Tank extends MyPolygon{
 		this(x,y,colorList,good, speed);
 		this.tc = tc;
 		this.angle = angle;
+		this.ptAngle = angle;
 		this.speedV.x = speed;//初始向量的方向和坦克的初始方向一样
 		this.speedV.y = 0;
 		this.initPoints();
@@ -130,10 +142,10 @@ public class Tank extends MyPolygon{
 		speedV.y = sinv*speed;
 	}
 	public void initPoints() {
-		this.points.add(clockWiseTurn(new MyPoint(x-height/2,y-width/2),new MyPoint(x,y)));
-		this.points.add(clockWiseTurn(new MyPoint(x+height/2,y-width/2),new MyPoint(x,y)));
-		this.points.add(clockWiseTurn(new MyPoint(x+height/2,y+width/2),new MyPoint(x,y)));
-		this.points.add(clockWiseTurn(new MyPoint(x-height/2,y+width/2),new MyPoint(x,y)));
+		this.points.add(clockWiseTurn(new MyPoint(x-height/2,y-width/2),new MyPoint(x,y),angle));
+		this.points.add(clockWiseTurn(new MyPoint(x+height/2,y-width/2),new MyPoint(x,y),angle));
+		this.points.add(clockWiseTurn(new MyPoint(x+height/2,y+width/2),new MyPoint(x,y),angle));
+		this.points.add(clockWiseTurn(new MyPoint(x-height/2,y+width/2),new MyPoint(x,y),angle));
 	}
 	/*
 	 * 根据不同坦克设置坦克的移动方式
@@ -160,11 +172,7 @@ public class Tank extends MyPolygon{
 	private void turn() {	
 		if(good) {//友军
 			if(bL) angle -= myTankTurnSpeed;
-			if(bR) {
-				angle += myTankTurnSpeed;
-				initSpeedV();
-			}
-
+			if(bR) angle += myTankTurnSpeed; 
 		}else {//敌军
 			if(!turning)return;//如果不是转弯状态就return
 			if(randomTurnAngle >0) {//如果randomAngle是正数,说明是向右转
@@ -223,14 +231,14 @@ public class Tank extends MyPolygon{
 	public void enemyFire() {
 		if(good)return;
 		if(fireStep <=0) {
-			tc.missiles.add(fire(enemyTankMissileSpeed,enemyTankMissileSize));
+			if(missilesNum > 0 )tc.missiles.add(fire(enemyTankMissileSpeed,enemyTankMissileSize));
 			fireStep = random.nextInt(50)+10;
 		}
 	}
 	/*
-	 * 得到某个点从零度绕到当前前角度后的点
+	 * 得到某个点从零度绕到指定角度后的点
 	 */	
-	public MyPoint clockWiseTurn(MyPoint p,MyPoint cp) {
+	public MyPoint clockWiseTurn(MyPoint p,MyPoint cp,float angle) {
 	    // calc arc   
 		float l = (float) ((angle * Math.PI) / 180);  
 	      
@@ -257,8 +265,8 @@ public class Tank extends MyPolygon{
 		for(int i = 0 ; i< mypoints.size();i++) {
 			MyPoint p = points.get(i);	
 			MyPoint mp = mypoints.get(i);
-			p.x = clockWiseTurn(mp,new MyPoint(x,y)).x;
-			p.y = clockWiseTurn(mp,new MyPoint(x,y)).y;
+			p.x = clockWiseTurn(mp,new MyPoint(x,y),angle).x;
+			p.y = clockWiseTurn(mp,new MyPoint(x,y),angle).y;
 		}	
 	}
 	
@@ -361,7 +369,6 @@ public class Tank extends MyPolygon{
 		Stroke s = new BasicStroke(1, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
 		Stroke s1 = new BasicStroke(2, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
 		g2.setStroke(s);
-		
 		g2.rotate(Math.toRadians(angel),x,y);//以cx,cy为中心旋转画布
 			
 		//画两个履带
@@ -372,12 +379,54 @@ public class Tank extends MyPolygon{
 		g2.fill(rectRound1 );
 		g2.fill(rectRound2);
 
+		
+		
+
+		g2.setStroke(s);
+		g2.setColor(colorList.get(19));
+		//画履带格子
+		for(int i = 0 ;this.leftTrackPosition+i*lvdaiSpace < th;i++) {
+			MyPoint p1 = new MyPoint(x-tw-mw/2+fengxi,y-th/2+i*lvdaiSpace +this.leftTrackPosition);
+			MyPoint p2 = new MyPoint(x-mw/2,y-th/2+i*lvdaiSpace +this.leftTrackPosition);
+			Line2D line1 = new Line2D.Double(p1.x,p1.y,p2.x,p2.y);
+			g2.draw(line1);
+		}
+		for(int i = 0 ;this.rightTrackPosition+i*lvdaiSpace < th;i++) {
+			MyPoint p3 = new MyPoint(x+mw/2+fengxi, y-th/2+i*lvdaiSpace +this.rightTrackPosition);
+			MyPoint p4 = new MyPoint(x+mw/2+tw, y-th/2+i*lvdaiSpace +this.rightTrackPosition);
+			Line2D line2 = new Line2D.Double(p3.x,p3.y,p4.x,p4.y);
+			g2.draw(line2);
+		}
 		//画中间车身
 		GradientPaint g1 = new GradientPaint(x-mw/2+fengxi,y-mh/2,colorList.get(2),x-mw/2+fengxi+mw-2*fengxi,y-mh/2+mh,colorList.get(3));
 		g2.setPaint(g1);
 		RoundRectangle2D rectRound3 = new RoundRectangle2D.Double(x-mw/2+fengxi, y-mh/2, mw-2*fengxi, mh,5,5);
 		g2.fill(rectRound3);
-
+		
+		//画下面的栅栏
+		g2.setStroke(s1);
+		g2.setColor(colorList.get(18));
+		RoundRectangle2D rectRound8 = new RoundRectangle2D.Double(x-12,y+20,24,10,3,3);	
+		g2.draw(rectRound8);
+		Line2D line3 = new Line2D.Double(x-8,y+20,x-8,y+30);
+		Line2D line4 = new Line2D.Double(x-4,y+20,x-4,y+30);
+		Line2D line5 = new Line2D.Double(x,y+20,x,y+30);
+		Line2D line6 = new Line2D.Double(x+4,y+20,x+4,y+30);
+		Line2D line7 = new Line2D.Double(x+8,y+20,x+8,y+30);
+		g2.draw(line3);
+		g2.draw(line4);
+		g2.draw(line5);
+		g2.draw(line6);
+		g2.draw(line7);
+		
+		//画上方的两个横条
+		g2.setColor(colorList.get(11));
+		Rectangle2D rect3 = new Rectangle2D.Double(x-13,y-27,8,2);
+		g2.fill(rect3);
+		Rectangle2D rect4 = new Rectangle2D.Double(x+5,y-27,8,2);
+		g2.fill(rect4);
+		
+		//***************************画炮盖**********************************************************************
 		GradientPaint g3 = new GradientPaint(x,y-mh/2-20,colorList.get(4),x,y+20,colorList.get(5));
 		g2.setPaint(g3);
 		g2.fill(tankTopDraw());
@@ -406,12 +455,7 @@ public class Tank extends MyPolygon{
 		g2.setColor(colorList.get(10));
 		Ellipse2D ellipse2 = new Ellipse2D.Double(x+5,y-3,6,6);
 		g2.fill(ellipse2);
-		//画上方的两个横条
-		g2.setColor(colorList.get(11));
-		Rectangle2D rect3 = new Rectangle2D.Double(x-13,y-27,8,2);
-		g2.fill(rect3);
-		Rectangle2D rect4 = new Rectangle2D.Double(x+5,y-27,8,2);
-		g2.fill(rect4);
+
 		//画两个把手
 		g2.setColor(colorList.get(12));
 		Arc2D arc1 = new Arc2D.Double(x-10, y-17, 8, 8, 0, -180,Arc2D.OPEN);	
@@ -432,44 +476,12 @@ public class Tank extends MyPolygon{
 		g2.setColor(colorList.get(17));
 		RoundRectangle2D rectRound7 = new RoundRectangle2D.Double(x-6,y+10,12,5,3,3);	
 		g2.fill(rectRound7);
-		//画下面的栅栏
-		g2.setStroke(s1);
-		g2.setColor(colorList.get(18));
-		RoundRectangle2D rectRound8 = new RoundRectangle2D.Double(x-12,y+20,24,10,3,3);	
-		g2.draw(rectRound8);
-		Line2D line3 = new Line2D.Double(x-8,y+20,x-8,y+30);
-		Line2D line4 = new Line2D.Double(x-4,y+20,x-4,y+30);
-		Line2D line5 = new Line2D.Double(x,y+20,x,y+30);
-		Line2D line6 = new Line2D.Double(x+4,y+20,x+4,y+30);
-		Line2D line7 = new Line2D.Double(x+8,y+20,x+8,y+30);
-		g2.draw(line3);
-		g2.draw(line4);
-		g2.draw(line5);
-		g2.draw(line6);
-		g2.draw(line7);
 		g2.setColor(c);
 		
-
-		g2.setStroke(s);
-		g2.setColor(colorList.get(19));
-		//画履带格子
-		for(int i = 0 ;this.leftTrackPosition+i*lvdaiSpace < th;i++) {
-			MyPoint p1 = new MyPoint(x-tw-mw/2+fengxi,y-th/2+i*lvdaiSpace +this.leftTrackPosition);
-			MyPoint p2 = new MyPoint(x-mw/2,y-th/2+i*lvdaiSpace +this.leftTrackPosition);
-			Line2D line1 = new Line2D.Double(p1.x,p1.y,p2.x,p2.y);
-			g2.draw(line1);
-		}
-		for(int i = 0 ;this.rightTrackPosition+i*lvdaiSpace < th;i++) {
-			MyPoint p3 = new MyPoint(x+mw/2+fengxi, y-th/2+i*lvdaiSpace +this.rightTrackPosition);
-			MyPoint p4 = new MyPoint(x+mw/2+tw, y-th/2+i*lvdaiSpace +this.rightTrackPosition);
-			Line2D line2 = new Line2D.Double(p3.x,p3.y,p4.x,p4.y);
-			g2.draw(line2);
-		}
 		g2.rotate(Math.toRadians(-angel),x,y);//恢复旋转
-		
-		if(good) {
-			//bb.draw(g2);
-		}		
+		//画血条
+		bb.draw(g2);
+	
 	}
 	/*
 	 * 坦克盖路径
@@ -508,18 +520,51 @@ public class Tank extends MyPolygon{
 	/*
 	 * 坦克血条内部类
 	 */
-//	private class BloodBar{
-//		public void draw(Graphics2D g2) {
-//			Color c = g2.getColor();
-//			g2.setColor(new Color(139,0,0));
-//			if(life <=3) {//如果血量小于3了就开始闪
-//				g2.setColor(new Color(random.nextInt(255),random.nextInt(255),random.nextInt(255)));
-//			}
-//			g2.drawRect(getCx()-height/2,getCy()-height/2-23, height,20 );
-//			g2.fillRect(getCx()-height/2,getCy()-height/2-23, height/fullLife*life,20);
-//			g2.setColor(c);
-//		}
-//	}
+	private class BloodBar{
+		public void draw(Graphics2D g2) {
+			Color c = g2.getColor();
+			g2.setColor(new Color(180, 179, 148));
+			if(life <=3) {//如果血量小于3了就开始闪
+				g2.setColor(new Color(random.nextInt(255),random.nextInt(255),random.nextInt(255)));
+			}
+			//画右的圆
+			g2.setColor(new Color(180, 179, 148));
+			Ellipse2D ellipse1 = new Ellipse2D.Double(x+height/2,y-width/2-46,20,20);
+			g2.draw(ellipse1);
+			//最外面的方框
+			RoundRectangle2D rectRound8 = new RoundRectangle2D.Double(x-height/2-5,y-width/2-43, height+10,12,8,8);
+			g2.fill(rectRound8);			
+			//绿血条
+			g2.setColor(new Color(111, 145, 32));
+			RoundRectangle2D rectRound9 = new RoundRectangle2D.Double(x-height/2-4,y-width/2-42, (height+8) / fullLife * life,5,3,3);
+			g2.fill(rectRound9);
+			
+			//蓝血条
+			g2.setColor(new Color(53, 66, 136));
+			RoundRectangle2D rectRound10 = new RoundRectangle2D.Double(x-height/2-4,y-width/2-37, (height+8) /fullMissilesNum * missilesNum,5,3,3);
+			g2.fill(rectRound10);
+			
+			//右侧里圆
+			g2.setColor(new Color(236, 46, 5));
+			Ellipse2D ellipse2 = new Ellipse2D.Double(x+height/2+1,y-width/2-46,19,19);
+			GradientPaint g1 = new GradientPaint(x+height/2+1,y-width/2-43,new Color(236, 46, 5),x+height/2+1,y-width/2-30,new Color(245, 106, 76));
+			g2.setPaint(g1);
+			g2.fill(ellipse2);
+			
+			//画字
+			Font f=new Font("宋体",1,14);
+			g2.setFont(f);
+			g2.setColor(new Color(194, 249, 145));
+			if(good)g2.drawString(name, x+height/2+2,y-width/2-31);
+			else {
+				int num = Integer.parseInt(name);
+				if(num < 10) g2.drawString(name, x+height/2+6,y-width/2-31);
+				else if(num >=10 && num <100) g2.drawString(name, x+height/2+2,y-width/2-31);
+			}
+			
+			g2.setColor(c);
+		}
+	}
 
 // ******************************************************碰撞检测
 	public void enemyCollidesWithWallAndTank() {
@@ -630,7 +675,8 @@ public class Tank extends MyPolygon{
 	 * 射击,用面向对象的思想，当坦克射击时会射出一个子弹
 	 */
 	public Missile fire(int speed,int radius) {
-		Missile m =new Missile((int)getPtPoint().x, (int)getPtPoint().y, radius,good,angle, speed,tc);//炮筒方向是哪个，子弹方向就是哪个
+		Missile m =new Missile(getPtPoint().x, getPtPoint().y, radius,good,angle, speed,tc);//炮筒方向是哪个，子弹方向就是哪个
+		missilesNum -- ;
 		if(good) {
 			new Thread(new SoundThread("sound/发炮.wav")).start();//启用新进程
 		}
@@ -640,7 +686,8 @@ public class Tank extends MyPolygon{
 	 * 重载fire方法
 	 */
 	public Missile fire(int speed,int radius,int angle) {
-		Missile m =new Missile((int)getPtPoint().x, (int)getPtPoint().y,radius, good,angle, speed,tc);//炮筒方向是哪个，子弹方向就是哪个
+		Missile m =new Missile(getPtPoint().x, getPtPoint().y,radius, good,angle, speed,tc);//炮筒方向是哪个，子弹方向就是哪个
+		missilesNum -- ;
 		return m;
 	}
 
@@ -666,10 +713,10 @@ public class Tank extends MyPolygon{
 			switch(key) {
 				//如果按了ctrl键，就发射子弹，将坦克产生的子弹对象添加到tc.missiles中
 				case KeyEvent.VK_F:	
-					superFire();
+					if(missilesNum > 0) superFire();
 					break;
 				case KeyEvent.VK_G:	
-					tc.missiles.add(fire(myTankShotSpeend,myMissileSize));
+					if(missilesNum > 0)tc.missiles.add(fire(myTankShotSpeend,myMissileSize));
 					break;
 				case KeyEvent.VK_A:
 					bL =true;
@@ -683,6 +730,12 @@ public class Tank extends MyPolygon{
 				case KeyEvent.VK_S:	
 					bB = true;
 					break;
+//				case KeyEvent.VK_Q:	
+//					ptL = true;	
+//					break;
+//				case KeyEvent.VK_E:	
+//					ptR = true;	
+//					break;
 			}
 		}else if(p =="P2") {
 			switch(key) {
@@ -705,6 +758,12 @@ public class Tank extends MyPolygon{
 				case KeyEvent.VK_DOWN:
 					bB = true;
 					break;
+//				case KeyEvent.VK_DELETE:	
+//					ptL = true;	
+//					break;
+//				case KeyEvent.VK_PAGE_DOWN:	
+//					ptR = true;	
+//					break;	
 			}
 		}
 				
@@ -730,6 +789,12 @@ public class Tank extends MyPolygon{
 				case KeyEvent.VK_S:	
 					bB = false;
 					break;
+//				case KeyEvent.VK_Q:	
+//					ptL = false;	
+//					break;
+//				case KeyEvent.VK_E:	
+//					ptR = false;	
+//					break;
 			}
 		}else if(p =="P2") {//玩家2
 			switch(key) {
@@ -745,6 +810,12 @@ public class Tank extends MyPolygon{
 				case KeyEvent.VK_DOWN:
 					bB = false;
 					break;
+//				case KeyEvent.VK_DELETE:	
+//					ptL = false;	
+//					break;
+//				case KeyEvent.VK_PAGE_DOWN:	
+//					ptR = false;	
+//					break;	
 			}
 		}			
 		locateDirection();
@@ -840,7 +911,7 @@ public class Tank extends MyPolygon{
 	 * 得到炮筒中心点
 	 */
 	public MyPoint getPtPoint() {
-		MyPoint pt = clockWiseTurn(new MyPoint(x+ph,y), new MyPoint(x,y));
+		MyPoint pt = clockWiseTurn(new MyPoint(x+ph,y), new MyPoint(x,y),angle);
 		return pt;
 	}
 	

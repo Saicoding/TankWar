@@ -58,7 +58,7 @@ public class Missile extends MyCircle{
 	/*
 	 * 带引用的构造方法
 	 */
-	public  Missile(int x ,int y,int radius ,boolean good,float angle ,int speed,TankClient tc) {
+	public  Missile(float x ,float y,int radius ,boolean good,float angle ,int speed,TankClient tc) {
 		this(x,y,radius,good,angle,speed);
 		this.tc = tc;
 		initSpeedV();
@@ -127,10 +127,9 @@ public class Missile extends MyCircle{
 			t.setLife(t.getLife()-1);
 			if(t.getLife() <=0) {
 				t.setLive(false);
-				this.setLive(false);
 				new Thread(new SoundThread("sound/坦克爆炸.wav")).start();//启用新进程
 			}	
-			if(!this.good)this.setLive(false);
+			this.setLive(false);
 			tc.animates.add(new Animate(t.getX(),t.getY(),"boom",7,tc));
 			return true;
 		}
