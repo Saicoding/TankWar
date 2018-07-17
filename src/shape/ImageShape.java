@@ -5,23 +5,21 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.util.ArrayList;
 
-import mytest.MyTest;
+import Main.TankClient;
 
 public class ImageShape extends MyPolygon{
-	int x,y,iw,ih;
-	Image img ;
-	String imageSource;
-	ArrayList<MyPoint> points = new ArrayList<MyPoint>();
-	MyTest mt;
-	public ImageShape(int x, int y, String imageSource,MyTest mt) {
+	public float iw,ih;
+	public Image img ;
+	public String imageSource;
+	public TankClient tc;
+	public ImageShape(float x, float y, String imageSource,TankClient tc) {
 		this.x = x;
 		this.y = y;
-		this.mt = mt;
+		this.tc = tc;
 		this.imageSource = imageSource;
 		this.img = getImage();
-		this.iw = img.getWidth(mt);
-		this.ih = img.getHeight(mt);		
-		this.setPolygonPoints();
+//		this.iw = img.getWidth(tc);//解决不了图片第一次载入得不到iw的问题
+//		this.ih = img.getHeight(tc);
 	}
 	
 	public Image getImage() {
@@ -30,15 +28,8 @@ public class ImageShape extends MyPolygon{
 		return img;
 	}
 	
-	public void setPolygonPoints() {
-		this.points.add(new MyPoint(x,y));
-		this.points.add(new MyPoint(x+iw,y));
-		this.points.add(new MyPoint(x+iw,y+ih));
-		this.points.add(new MyPoint(x,y+ih));
-	}
-	
 	public void draw(Graphics g) {
 		Graphics2D g2 =(Graphics2D)g;
-		g2.drawImage(img,x,y,mt);	
+		g2.drawImage(img,(int)(x-iw/2),(int)(y-ih/2),tc);	
 	}
 }

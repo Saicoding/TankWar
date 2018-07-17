@@ -29,6 +29,8 @@ import shape.Vector;
 public class Tank extends MyPolygon{
 	private float lastX = 700,lastY=600,lastAngle=0;//上一次的坐标和中心坐标
 	private Vector lastPosition = new Vector();
+	
+	public String owner;
 
 	public float angle = 0;//坦克角度
 	public float ptAngle =0;//炮筒角度
@@ -70,11 +72,9 @@ public class Tank extends MyPolygon{
 	private int fengxi = 1;//车身缝隙
 	
 	private int myTankShotSpeend = 20;//我的坦克射击速度
-	private int myMissileSize = 20;//我的坦克子弹大小
 	private int myTankTurnSpeed = 4;//我的坦克转弯速度
 
 	private int enemyTankMissileSpeed = 14;//敌人坦克子弹速度
-	private int enemyTankMissileSize = 5;//敌人坦克子弹大小
 	private int enemyTankTurnSpeed = 1;//敌人坦克转弯速度
 	
 	private boolean good =false;//好坏坦克
@@ -105,7 +105,7 @@ public class Tank extends MyPolygon{
 		if(good) {
 			this.life=10;//如果是友 生命初始是10
 			this.fullLife = life;//最大生命;
-			this.missilesNum = 100;//初始弹药数量
+			this.missilesNum = 5000;//初始弹药数量
 			this.fullMissilesNum = missilesNum;//初始弹药库
 			this.stop = true;//友军初始停止
 			
@@ -113,7 +113,7 @@ public class Tank extends MyPolygon{
 		else {
 			this.life =8;//如果是敌人,生命初始是1
 			this.fullLife = life;//最大生命
-			this.missilesNum = 20;//初始弹药数量
+			this.missilesNum = 50;//初始弹药数量
 			this.fullMissilesNum = missilesNum;//初始弹药库
 			this.stop =false;//敌人初始不停止
 			this.bF = true;//如果是敌人,坦克初始向前
@@ -137,7 +137,7 @@ public class Tank extends MyPolygon{
 	public void initSpeedV() {
 	    float l = (float) ((angle * Math.PI) / 180);        
 	    float cosv = (float) Math.cos(l);  
-	    float sinv = (float) Math.sin(l);  
+	    float sinv = (float) Math.sin(l);    
 		speedV.x = cosv*speed;
 		speedV.y = sinv*speed;
 	}
@@ -231,8 +231,8 @@ public class Tank extends MyPolygon{
 	public void enemyFire() {
 		if(good)return;
 		if(fireStep <=0) {
-			if(missilesNum > 0 )tc.missiles.add(fire(enemyTankMissileSpeed,enemyTankMissileSize));
-			fireStep = random.nextInt(50)+10;
+			if(missilesNum > 0 )tc.missiles.add(fire(enemyTankMissileSpeed));
+			fireStep = random.nextInt(10)+10;
 		}
 	}
 	/*
@@ -535,7 +535,10 @@ public class Tank extends MyPolygon{
 			RoundRectangle2D rectRound8 = new RoundRectangle2D.Double(x-height/2-5,y-width/2-43, height+10,12,8,8);
 			g2.fill(rectRound8);			
 			//绿血条
-			g2.setColor(new Color(111, 145, 32));
+			if(good && life < 0.3 * fullLife) g2.setColor(new Color(random.nextInt(255),random.nextInt(255),random.nextInt(255)));
+			else if(good) g2.setColor(new Color(254, 1, 1));
+			else g2.setColor(new Color(111, 145, 32));
+			
 			RoundRectangle2D rectRound9 = new RoundRectangle2D.Double(x-height/2-4,y-width/2-42, (height+8) / fullLife * life,5,3,3);
 			g2.fill(rectRound9);
 			
@@ -547,16 +550,26 @@ public class Tank extends MyPolygon{
 			//右侧里圆
 			g2.setColor(new Color(236, 46, 5));
 			Ellipse2D ellipse2 = new Ellipse2D.Double(x+height/2+1,y-width/2-46,19,19);
-			GradientPaint g1 = new GradientPaint(x+height/2+1,y-width/2-43,new Color(236, 46, 5),x+height/2+1,y-width/2-30,new Color(245, 106, 76));
+			Color arcolor1,arcolor2;
+			if(good) {
+				arcolor1 = new Color(11, 174, 0);
+				arcolor2 = new Color(6, 99, 0);
+			}else {
+				arcolor1 = new Color(236, 46, 5);
+				arcolor2 = new Color(245, 106, 76);
+			}
+			GradientPaint g1 = new GradientPaint(x+height/2+1,y-width/2-43,arcolor1,x+height/2+1,y-width/2-30,arcolor2);
 			g2.setPaint(g1);
 			g2.fill(ellipse2);
 			
 			//画字
 			Font f=new Font("宋体",1,14);
 			g2.setFont(f);
-			g2.setColor(new Color(194, 249, 145));
-			if(good)g2.drawString(name, x+height/2+2,y-width/2-31);
-			else {
+			if(good) {
+				g2.setColor(new Color(206, 255, 254));
+				g2.drawString(name, x+height/2+2,y-width/2-31);
+			}else {
+				g2.setColor(new Color(194, 249, 145));
 				int num = Integer.parseInt(name);
 				if(num < 10) g2.drawString(name, x+height/2+6,y-width/2-31);
 				else if(num >=10 && num <100) g2.drawString(name, x+height/2+2,y-width/2-31);
@@ -581,6 +594,26 @@ public class Tank extends MyPolygon{
 			}
 		}
 	}
+	/*
+	 * 检测与血块碰撞
+	 */
+	public boolean collidesWithTools() {
+		Vector position = new Vector(new MyPoint(x,y));
+		Vector displacement = position.subTract(lastPosition);
+		for(int i = 0;i < tc.tools.size();i++) {
+			Tools t = tc.tools.get(i);
+			MininumTranslationVector mtv = collidesWith(t,displacement);
+			if(live && t.live && mtv.overlap > 0) {
+				if(t.name == "blood") {//判断工具类型为血块
+					this.life =fullLife;
+					t.live = false;
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
 	/*
 	 * 碰撞检测
 	 */
@@ -659,23 +692,15 @@ public class Tank extends MyPolygon{
 
 //****************************************************************************************
 
-	/*
-	 * 吃血块
-	 */
-	public boolean eat(Blood b) {
-//		if(this.live && b.isLive()&& this.getRect().intersects(b.getRect())) {
-//			this.life =fullLife;
-//			b.setLive(false);
-//			return true;
-//		}
-		return false;
-	}
 //射击------------------------------------------------------
 	/*
 	 * 射击,用面向对象的思想，当坦克射击时会射出一个子弹
 	 */
-	public Missile fire(int speed,int radius) {
-		Missile m =new Missile(getPtPoint().x, getPtPoint().y, radius,good,angle, speed,tc);//炮筒方向是哪个，子弹方向就是哪个
+	public Missile fire(int speed) {
+		Missile m =new Missile(getPtPoint().x, getPtPoint().y, "img/wissile",tc,good,angle, speed);//炮筒方向是哪个，子弹方向就是哪个
+		if(owner == "p1")tc.p1AllShotNum++;//如果子弹是p1的,就加载到统计中
+		else if(owner == "p2") tc.p2AllShotNum++;//如果子弹是p2的,就加载到统计中
+		m.owner = owner;
 		missilesNum -- ;
 		if(good) {
 			new Thread(new SoundThread("sound/发炮.wav")).start();//启用新进程
@@ -686,7 +711,13 @@ public class Tank extends MyPolygon{
 	 * 重载fire方法
 	 */
 	public Missile fire(int speed,int radius,int angle) {
-		Missile m =new Missile(getPtPoint().x, getPtPoint().y,radius, good,angle, speed,tc);//炮筒方向是哪个，子弹方向就是哪个
+		Missile m =new Missile(getPtPoint().x, getPtPoint().y, "img/wissile",tc, good,angle, speed);//炮筒方向是哪个，子弹方向就是哪个
+		if(owner == "p1")tc.p1AllShotNum++;//如果子弹是p1的,就加载到统计中
+		else if(owner == "p2") tc.p2AllShotNum++;//如果子弹是p2的,就加载到统计中
+		m.owner = owner;
+		if(good) {
+			new Thread(new SoundThread("sound/发炮.wav")).start();//启用新进程
+		}
 		missilesNum -- ;
 		return m;
 	}
@@ -716,7 +747,7 @@ public class Tank extends MyPolygon{
 					if(missilesNum > 0) superFire();
 					break;
 				case KeyEvent.VK_G:	
-					if(missilesNum > 0)tc.missiles.add(fire(myTankShotSpeend,myMissileSize));
+					if(missilesNum > 0)tc.missiles.add(fire(myTankShotSpeend));
 					break;
 				case KeyEvent.VK_A:
 					bL =true;
@@ -741,10 +772,10 @@ public class Tank extends MyPolygon{
 			switch(key) {
 			//如果按了ctrl键，就发射子弹，将坦克产生的子弹对象添加到tc.missiles中
 				case KeyEvent.VK_M:	
-					superFire();
+					if(missilesNum > 0) superFire();
 					break;
 				case KeyEvent.VK_SPACE:	
-					tc.missiles.add(fire(myTankShotSpeend,myMissileSize));
+					if(missilesNum > 0) tc.missiles.add(fire(myTankShotSpeend));
 					break;
 				case KeyEvent.VK_LEFT:
 					bL = true;

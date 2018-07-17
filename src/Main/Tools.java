@@ -5,27 +5,38 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.image.ImageObserver;
 
-public class Animate{
-	public float x,y,picNum;
-	private ImageObserver t;
-	private int step = 1;
+import shape.MyPolygon;
+
+public class Tools extends MyPolygon{
+	public String path;
+	public int picNum;
+	public int step = 1;
 	private int time = 0;
-	String path;
-	public boolean over = false;
+	public int w,h;
+	public String name;
 	
-	public Animate(float x,float y,String path,int picNum,ImageObserver t){
+	public ImageObserver t;
+	public boolean live = true;
+	/*
+	 * 构造方法
+	 */
+	public Tools (float x, float y, String path,String name,int picNum,int w,int h,ImageObserver t) {
 		this.x = x;
 		this.y = y;
-		this.picNum = picNum;
+		this.w = w;
+		this.h = h;
+		this.live = true;
+		this.name = name;
 		this.path = path;
-		this.t =t;
+		this.t = t;
+		this.picNum = picNum;	
 	}
 	
 	public void draw(Graphics g) {
 		Graphics2D g2 =(Graphics2D)g;
-		if(over) return ;
+
 		if(this.step > picNum ) {
-			this.over = true;
+			this.step = 1;
 			return;
 		}
 		Toolkit kit = Toolkit.getDefaultToolkit();
