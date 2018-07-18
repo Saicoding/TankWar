@@ -31,6 +31,10 @@ public class Tank extends MyPolygon{
 	private Vector lastPosition = new Vector();
 	
 	public String owner;
+	public boolean spi = false;//是否是间谍坦克
+	public int serialHitNum =0;//连续击中坦克数量
+	public int toSpiNum = 1;//变成自己坦克需要打击的数量
+	public Tank lastHitTank;//上一次击中的坦克
 
 	public float angle = 0;//坦克角度
 	public float ptAngle =0;//炮筒角度
@@ -77,7 +81,7 @@ public class Tank extends MyPolygon{
 	private int enemyTankMissileSpeed = 14;//敌人坦克子弹速度
 	private int enemyTankTurnSpeed = 1;//敌人坦克转弯速度
 	
-	private boolean good =false;//好坏坦克
+	public boolean good =false;//好坏坦克
 	private boolean bL = false,bR = false,bF = false,bB = false;//定义初始四个方向键按下状态
 	private boolean stop = false;//坦克是否停下
 	
@@ -108,7 +112,7 @@ public class Tank extends MyPolygon{
 			this.missilesNum = 5000;//初始弹药数量
 			this.fullMissilesNum = missilesNum;//初始弹药库
 			this.stop = true;//友军初始停止
-			
+			this.spi = true;	
 		}
 		else {
 			this.life =8;//如果是敌人,生命初始是1
@@ -536,7 +540,7 @@ public class Tank extends MyPolygon{
 			g2.fill(rectRound8);			
 			//绿血条
 			if(good && life < 0.3 * fullLife) g2.setColor(new Color(random.nextInt(255),random.nextInt(255),random.nextInt(255)));
-			else if(good) g2.setColor(new Color(254, 1, 1));
+			else if(good || spi) g2.setColor(new Color(254, 1, 1));
 			else g2.setColor(new Color(111, 145, 32));
 			
 			RoundRectangle2D rectRound9 = new RoundRectangle2D.Double(x-height/2-4,y-width/2-42, (height+8) / fullLife * life,5,3,3);
@@ -551,7 +555,7 @@ public class Tank extends MyPolygon{
 			g2.setColor(new Color(236, 46, 5));
 			Ellipse2D ellipse2 = new Ellipse2D.Double(x+height/2+1,y-width/2-46,19,19);
 			Color arcolor1,arcolor2;
-			if(good) {
+			if(good || spi) {
 				arcolor1 = new Color(11, 174, 0);
 				arcolor2 = new Color(6, 99, 0);
 			}else {
@@ -697,7 +701,7 @@ public class Tank extends MyPolygon{
 	 * 射击,用面向对象的思想，当坦克射击时会射出一个子弹
 	 */
 	public Missile fire(int speed) {
-		Missile m =new Missile(getPtPoint().x, getPtPoint().y, "img/wissile",tc,good,angle, speed);//炮筒方向是哪个，子弹方向就是哪个
+		Missile m =new Missile(getPtPoint().x, getPtPoint().y, "img/wissile",tc,good,spi,angle, speed);//炮筒方向是哪个，子弹方向就是哪个
 		if(owner == "p1")tc.p1AllShotNum++;//如果子弹是p1的,就加载到统计中
 		else if(owner == "p2") tc.p2AllShotNum++;//如果子弹是p2的,就加载到统计中
 		m.owner = owner;
@@ -711,7 +715,7 @@ public class Tank extends MyPolygon{
 	 * 重载fire方法
 	 */
 	public Missile fire(int speed,int radius,int angle) {
-		Missile m =new Missile(getPtPoint().x, getPtPoint().y, "img/wissile",tc, good,angle, speed);//炮筒方向是哪个，子弹方向就是哪个
+		Missile m =new Missile(getPtPoint().x, getPtPoint().y, "img/wissile",tc, good,spi,angle, speed);//炮筒方向是哪个，子弹方向就是哪个
 		if(owner == "p1")tc.p1AllShotNum++;//如果子弹是p1的,就加载到统计中
 		else if(owner == "p2") tc.p2AllShotNum++;//如果子弹是p2的,就加载到统计中
 		m.owner = owner;

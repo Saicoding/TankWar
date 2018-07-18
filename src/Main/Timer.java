@@ -19,8 +19,8 @@ public class Timer {
 	}
 	
 	public int getElaplseTime() {
-	      if (this.running) return ((int)(new Date().getTime() - this.startTime))/1000;
-	      else              return this.elapsedTime/1000;
+	      if (this.running) return ((int)(new Date().getTime() - this.startTime));
+	      else              return this.elapsedTime;
 	}
 	
 	public void reset() {

@@ -22,6 +22,7 @@ public class Missile extends ImageShape{
 	
 	private float angle;
 	private boolean good;//子弹阵营	
+	public boolean spi = false;//子弹是不是间谍子弹
 	private boolean live = true;//一new出来肯定是活着的
 	public String owner;
 	public String imageSource; 
@@ -39,12 +40,11 @@ public class Missile extends ImageShape{
 	Color color = new Color(r,g,b);//子弹颜色
 	
 	public TankClient tc;//创建tc引用
-
 	
 	/*
 	 * 构造方法
 	 */
-	public Missile(float x, float y, String imageSource,TankClient tc,boolean good,float angle ,int speed) {
+	public Missile(float x, float y, String imageSource,TankClient tc,boolean good,boolean spi,float angle ,int speed) {
 		super(x, y, imageSource, tc);
 		this.x = x;
 		this.y = y;
@@ -56,6 +56,7 @@ public class Missile extends ImageShape{
 		this.tc = tc;
 		this.iw = 50;
 		this.ih = 13;
+		this.spi = spi;
 		initSpeedV();
 		initPoints();
 	}
@@ -170,7 +171,7 @@ public class Missile extends ImageShape{
 	public boolean collidesWithTank(Tank t) {
 		Vector position = new Vector(new MyPoint(x,y));
 		Vector displacement = position.subTract(lastPosition);
-		if(this.isLive() && t.isLive() && collidesWith(t,displacement).axis!=null &&  collidesWith(t,displacement).overlap !=0 && good == !t.isGood()) {//
+		if(this.isLive() && t.isLive() && collidesWith(t,displacement).axis!=null &&  collidesWith(t,displacement).overlap !=0 && spi == !t.spi) {//
 			t.setLife(t.getLife()-1);
 			if(t.getLife() <=0) {
 				t.setLive(false);
@@ -181,8 +182,35 @@ public class Missile extends ImageShape{
 				tc.animates.add(new Animate(x,y,"spark",8,tc));
 			}
 			this.setLive(false);
-			if(owner == "p1") tc.p1AllHitNum++;
-			else if(owner == "p2") tc.p2AllHitNum++;		
+			
+			//我的坦克的方法
+			if(owner == "p1") {
+				if(t == tc.myTanks.get(0).lastHitTank ) {//如果打的这个坦克是上一次击中的坦克,连续击中就加1
+					tc.myTanks.get(0).serialHitNum ++;
+					//如果连续打中同一辆敌人坦克4次,敌人坦克就变成好坦克
+					if(tc.myTanks.get(0).serialHitNum >= tc.myTanks.get(0).toSpiNum-1) {
+						t.spi = true;
+					}
+				}else {
+					tc.myTanks.get(0).serialHitNum = 0;
+				}
+				tc.myTanks.get(0).lastHitTank = t;
+				tc.p1AllHitNum++;
+			}else if(owner == "p2") {
+				if(t == tc.myTanks.get(1).lastHitTank ) {//如果打的这个坦克是上一次击中的坦克,连续击中就加1
+					tc.myTanks.get(1).serialHitNum ++;
+					if(tc.myTanks.get(1).serialHitNum >= tc.myTanks.get(0).toSpiNum-1) {
+						t.spi = true;
+					}
+				}else {
+					tc.myTanks.get(1).serialHitNum = 0;
+				}
+				tc.myTanks.get(1).lastHitTank = t;			
+				tc.p2AllHitNum++;		
+			}
+			
+			
+			
 			return true;
 		}
 		return false;

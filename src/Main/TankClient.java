@@ -58,7 +58,9 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	
 	public int time = 0;
 	
-	public Timer timer1 = new Timer();//计时器
+	public Timer timer1 = new Timer();//生成血块计时器
+	public Timer timer2 = new Timer();//刷新敌人坦克计时器
+	public Timer timer3 = new Timer();//刷新动画等待时间
 	
 	public ArrayList<Tank> myTanks =new ArrayList<Tank>();//自己坦克数组
 	public ArrayList<Tank> enemyTanks = new ArrayList<Tank>();//敌人坦克数组
@@ -80,11 +82,11 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 
 	public void paint(Graphics g) {
 		//每隔一段时间刷新道具
-		int t = random.nextInt(60)+45;
+		int t = random.nextInt(6000)+45000;
 		float bx = random.nextInt(GAME_WIDTH-80)+40;
 		float by = random.nextInt(GAME_HEIGHT-80)+80;
+		
 		if(timer1.getElaplseTime() > t) {
-//			(float x, float y, String path,String name, int picNum,int w,int h,ImageObserver t)
 			Blood b = new Blood(bx,by,"blood","blood",7,65,65,this);
 			tools.add(b);
 			timer1.start();
@@ -116,25 +118,28 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 		}
 		
 		//每隔随机一个时间刷新敌人的坦克
-		int timeNum = random.nextInt(100)+50;
+		int timeNum = random.nextInt(5000)+2000;
 		int pos = random.nextInt(3);
-		time++;
-		if(time>timeNum && totalEnemyTankNum>0) {
-			time =0;
+		int space =0;
+		if(pos == 2) space =52;	
+		if(timer2.getElaplseTime()>timeNum && totalEnemyTankNum>0) {//如果刷新坦克timer大于指定时间,就启动动画timer,并暂停刷新坦克
+			timer3.start();
+			timer2.reset();
+			Animate a = new Animate((GAME_WIDTH-120)/2*pos-space+40,85,"born",11,this);//生成动画
+			animates.add(a);
+		}
+		if(timer3.getElaplseTime()>500) {//如果动画时间超过4秒
+			timer3.reset();
+			timer2.start();
 			ArrayList<Color> colorList = new ArrayList<Color>();
 			for(int i =0 ;i<25;i++) {
 				colorList.add(new Color(random.nextInt(150),random.nextInt(150),random.nextInt(150)));
 			}
-			int space =0;
-			if(pos == 2) space =52;	
-			
-			Animate a = new Animate((GAME_WIDTH-120)/2*pos-space+40,85,"born",11,this);//生成动画
-			animates.add(a);
 			Tank et =new Tank((GAME_WIDTH-120)/2*pos-space+40,85,colorList,false,enemyTankSpeed,90,this);
 			et.name = tankName+"";		
 			totalEnemyTankNum--;
 			enemyTanks.add(et);
-			tankName++;					
+			tankName++;	
 		}
 		
 		//画敌人坦克
@@ -255,6 +260,7 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	public void launchFream() {
 		//启动计时器
 		timer1.start();
+		timer2.start();
 		//添加自己坦克
 		for(int i=0;i<myTankNum;i++) {
 			ArrayList<Color> colorList = new ArrayList<Color>();
