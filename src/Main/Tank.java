@@ -19,6 +19,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Random;
 
+import Obstacle.River;
+import Obstacle.Tree;
+import Obstacle.Wall;
 import Thread.SoundThread;
 import shape.MininumTranslationVector;
 import shape.MyPoint;
@@ -29,11 +32,12 @@ import shape.Vector;
 public class Tank extends MyPolygon{
 	private float lastX = 700,lastY=600,lastAngle=0;//上一次的坐标和中心坐标
 	private Vector lastPosition = new Vector();
+	public  Timer timer = new Timer();
 	
 	public String owner;
 	public boolean spi = false;//是否是间谍坦克
 	public int serialHitNum =0;//连续击中坦克数量
-	public int toSpiNum = 1;//变成自己坦克需要打击的数量
+	public int toSpiNum = 5;//变成自己坦克需要打击的数量
 	public Tank lastHitTank;//上一次击中的坦克
 
 	public float angle = 0;//坦克角度
@@ -76,9 +80,9 @@ public class Tank extends MyPolygon{
 	private int fengxi = 1;//车身缝隙
 	
 	private int myTankShotSpeend = 20;//我的坦克射击速度
-	private int myTankTurnSpeed = 4;//我的坦克转弯速度
+	private int myTankTurnSpeed = 7;//我的坦克转弯速度
 
-	private int enemyTankMissileSpeed = 14;//敌人坦克子弹速度
+	private int enemyTankMissileSpeed = 18;//敌人坦克子弹速度
 	private int enemyTankTurnSpeed = 1;//敌人坦克转弯速度
 	
 	public boolean good =false;//好坏坦克
@@ -86,8 +90,8 @@ public class Tank extends MyPolygon{
 	private boolean stop = false;//坦克是否停下
 	
 	//计步器
-	private int moveStep = 40;//坦克计步器
-	private int fireStep = 40;//射击计步步
+	private int moveStep = 20;//坦克计步器
+	private int fireStep = 20;//射击计步步
 	private int randomTurnAngle =0;//随机的转向角度
 	private boolean turning = false;//是否在转弯
 
@@ -284,6 +288,11 @@ public class Tank extends MyPolygon{
 		lastPosition.x = x;
 		lastPosition.y = y;
 		
+		if(timer.getElaplseTime() > 50000) {
+			spi = false;
+			timer.reset();
+		}
+		
 		initMove() ;
 		turn();//先处理转弯,这里敌人必须转弯后才能移动
 		setTurnedSpeedV();//每次转向都要设置速度向量
@@ -382,9 +391,7 @@ public class Tank extends MyPolygon{
 		g2.setPaint(gdp1);
 		g2.fill(rectRound1 );
 		g2.fill(rectRound2);
-
-		
-		
+	
 
 		g2.setStroke(s);
 		g2.setColor(colorList.get(19));
@@ -621,14 +628,50 @@ public class Tank extends MyPolygon{
 	/*
 	 * 碰撞检测
 	 */
-	public void collidesWithWall(Wall w) {
+	public void collidesWithTrees(ArrayList<Tree> trees) {
 		Vector position = new Vector(new MyPoint(x,y));
 		Vector displacement = position.subTract(lastPosition);
-		MininumTranslationVector mtv=collidesWith(w,displacement);
 		
-		if(mtv.axis !=null && mtv.overlap !=0) {
-			goBackLastFrame();
-			enemyCollidesWithWallAndTank();
+		for(int i = 0 ;i<trees.size();i ++) {
+			Tree tree = trees.get(i);
+			MininumTranslationVector mtv=collidesWith(tree,displacement);
+			if(mtv.axis !=null && mtv.overlap !=0) {
+				goBackLastFrame();
+				enemyCollidesWithWallAndTank();
+			}
+		}
+	}
+	/*
+	 * 与河碰撞
+	 */
+	public void collidesWithRivers(ArrayList<River> rivers) {
+		Vector position = new Vector(new MyPoint(x,y));
+		Vector displacement = position.subTract(lastPosition);
+		
+		for(int i = 0 ;i<rivers.size();i ++) {
+			River river = rivers.get(i);
+			MininumTranslationVector mtv=collidesWith(river,displacement);
+			if(mtv.axis !=null && mtv.overlap !=0) {
+				goBackLastFrame();
+				enemyCollidesWithWallAndTank();
+			}
+		}
+	}
+	
+	/*
+	 * 与墙碰撞
+	 */
+	public void collidesWithWalls(ArrayList<Wall> walls) {
+		Vector position = new Vector(new MyPoint(x,y));
+		Vector displacement = position.subTract(lastPosition);
+		
+		for(int i = 0 ;i<walls.size();i ++) {
+			Wall wall = walls.get(i);
+			MininumTranslationVector mtv=collidesWith(wall,displacement);
+			if(mtv.axis !=null && mtv.overlap !=0) {
+				goBackLastFrame();
+				enemyCollidesWithWallAndTank();
+			}
 		}
 	}
 	

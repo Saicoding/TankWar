@@ -112,7 +112,7 @@ public class MyCircle extends MyShape{
 	 */
 	public Shape createPath() {
 		GeneralPath gp=new GeneralPath(); 
-		Ellipse2D ellipse = new Ellipse2D.Double(x-50,y-50,100,100);
+		Ellipse2D ellipse = new Ellipse2D.Double(x-radius,y-radius,2*radius,2*radius);
 		gp.append(ellipse, true);
 	    gp.closePath();  //关闭形状创建
 	    return gp;

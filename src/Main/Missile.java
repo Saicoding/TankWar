@@ -5,8 +5,10 @@ import java.awt.Graphics2D;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import Obstacle.Tree;
+import Obstacle.Wall;
 import Thread.SoundThread;
-import shape.ImageShape;
+import shape.ImagePolygonShape;
 import shape.MininumTranslationVector;
 import shape.MyPoint;
 import shape.Vector;
@@ -18,7 +20,7 @@ import shape.Vector;
  * @author:        saiyan
  * @date:          2018年7月5日 下午10:09:27
  */
-public class Missile extends ImageShape{
+public class Missile extends ImagePolygonShape{
 	
 	private float angle;
 	private boolean good;//子弹阵营	
@@ -175,6 +177,8 @@ public class Missile extends ImageShape{
 			t.setLife(t.getLife()-1);
 			if(t.getLife() <=0) {
 				t.setLive(false);
+				if(!t.good && owner == "p1")tc.p1AllKillNum++;//如果是p1打死的 ,打死数量就加1
+				else if(!t.good && owner == "p2")tc.p2AllKillNum++;//如果是p2打死的,打死数量就加1
 				new Thread(new SoundThread("sound/坦克爆炸.wav")).start();//打死就是爆炸声
 				tc.animates.add(new Animate(t.getX(),t.getY(),"boom",19,tc));
 			}else {
@@ -190,6 +194,7 @@ public class Missile extends ImageShape{
 					//如果连续打中同一辆敌人坦克4次,敌人坦克就变成好坦克
 					if(tc.myTanks.get(0).serialHitNum >= tc.myTanks.get(0).toSpiNum-1) {
 						t.spi = true;
+						t.timer.start();//启动计时器
 					}
 				}else {
 					tc.myTanks.get(0).serialHitNum = 0;
@@ -201,6 +206,7 @@ public class Missile extends ImageShape{
 					tc.myTanks.get(1).serialHitNum ++;
 					if(tc.myTanks.get(1).serialHitNum >= tc.myTanks.get(0).toSpiNum-1) {
 						t.spi = true;
+						t.timer.start();//启动计时器
 					}
 				}else {
 					tc.myTanks.get(1).serialHitNum = 0;
@@ -215,7 +221,9 @@ public class Missile extends ImageShape{
 		}
 		return false;
 	}
-	
+	/*
+	 * 子弹相撞
+	 */
 	public boolean collidesWithMissile(Missile m) {
 		Vector position = new Vector(new MyPoint(x,y));
 		Vector displacement = position.subTract(lastPosition);
@@ -228,9 +236,62 @@ public class Missile extends ImageShape{
 		}
 		return false;
 	}
+	/*
+	 * 子弹打树
+	 */
+	public boolean collidesWithTree(Tree tree) {
+		Vector position = new Vector(new MyPoint(x,y));
+		Vector displacement = position.subTract(lastPosition);
+		if(this.isLive() && tree.live  &&  collidesWith(tree,displacement).overlap !=0) {//
+			this.setLive(false);	
+			tree.live = false;
+			tc.animates.add(new Animate(tree.x,tree.y,"spark",8,tc));
+			return true;
+		}
+		return false;
+	}
 	
 	/*
-	 * 判断是否打中所有坦克
+	 * 子弹打墙
+	 */
+	public boolean collidesWithWall(Wall wall) {
+		Vector position = new Vector(new MyPoint(x,y));
+		Vector displacement = position.subTract(lastPosition);
+		if(this.isLive() && wall.live  &&  collidesWith(wall,displacement).overlap !=0) {//
+			this.setLive(false);	
+			wall.live = false;
+			tc.animates.add(new Animate(x,y,"spark",8,tc));
+			return true;
+		}
+		return false;
+	}
+	/*
+	 * 判断是否打中墙
+	 */
+	public boolean hitWalls(ArrayList<Wall> walls) {
+		for(int j =0;j < walls.size();j++) {
+			if(collidesWithWall(walls.get(j))) {
+				System.out.println(walls.get(j).live);
+				return true;
+			}
+		}	
+		return false;
+	}
+	
+	/*
+	 * 判断是否打中树
+	 */
+	public boolean hitTrees(ArrayList<Tree> trees) {
+		for(int j =0;j < trees.size();j++) {
+			if(collidesWithTree(trees.get(j))) {
+				return true;
+			}
+		}	
+		return false;
+	}
+	
+	/*
+	 * 判断是否打中坦克
 	 */
 	public boolean hitTanks(ArrayList<Tank> tanks) {
 		for(int j =0;j < tanks.size();j++) {

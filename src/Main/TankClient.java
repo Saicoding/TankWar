@@ -8,15 +8,17 @@ import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.Toolkit;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.image.ImageObserver;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Random;
 
+import Obstacle.River;
+import Obstacle.Tree;
+import Obstacle.Wall;
 import Thread.RemoveAnimateThread;
 
 
@@ -29,9 +31,9 @@ import Thread.RemoveAnimateThread;
  */
 public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方法，建议用这种方式
 	
-	public int enemyTankNum = 3;//敌人坦克数量
-	public int myTankNum = 2;//我的坦克数量
-	public int totalEnemyTankNum = 40;//库存坦克
+	public int enemyTankNum = 0;//敌人坦克数量
+	public int myTankNum = 1;//我的坦克数量
+	public int totalEnemyTankNum = 0;//库存坦克
 	public int myTankSpeed = 12;//我的坦克速度
 	public int enemyTankSpeed = 7;//敌人坦克速度
 	public int tankName = 1;//坦克起始名字
@@ -53,8 +55,8 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	public int p1AllHitNum = 0;//p1命中的子弹数量
 	public int p2AllShotNum = 0;//p2打出的子弹数量
 	public int p2AllHitNum = 0;//p2命中的子弹数量
-	
-	Wall w1 = new Wall(this),w2 = new Wall(this);
+	public int p1AllKillNum = 0;//击杀数量
+	public int p2AllKillNum = 0;//击杀数量
 	
 	public int time = 0;
 	
@@ -67,9 +69,13 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	
 	public ArrayList<Animate> animates =new ArrayList<Animate>();//炸弹容器
 	public ArrayList<Missile> missiles = new ArrayList<Missile>();//子弹容器
-	public ArrayList<Tools> tools = new ArrayList<Tools>();
+	public ArrayList<Tools> tools = new ArrayList<Tools>();//所有工具
+	public ArrayList<Tree> trees = new ArrayList<Tree>();//所有工具
+	public ArrayList<River> rivers = new ArrayList<River>();//所有河流
+	public ArrayList<Wall> walls = new ArrayList<Wall>();//所有河流
 	
 	Image offScreenImage = null;//声明一个虚拟图片，一次性展现，解决闪屏问题
+	Image offScreenImage1 = null;//声明一个虚拟图片，一次性展现，解决闪屏问题
 	
 	
 	/*
@@ -95,11 +101,23 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 		//移除已经播放完的动画
 		new Thread(new RemoveAnimateThread(this)).start();		
 		
+		//画河流
+		for(int i = 0 ; i<rivers.size();i++) {
+			River river = rivers.get(i);
+			river.draw(g);
+		}	
+		
 		//画子弹
 		for(int i = 0 ;i<missiles.size();i++) {
 			Missile m = missiles.get(i);
 			//判断子弹打击子弹
 			m.hitMissiles(missiles);
+			
+			//判断子弹打击树
+			m.hitTrees(trees);
+			
+			//判断子弹打击墙
+			m.hitWalls(walls);
 			
 			//判断撞击屏幕
 			m.collidesWithScreen();
@@ -116,6 +134,8 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 //			m.hitWall(w2);
 			m.draw(g);
 		}
+		
+
 		
 		//每隔随机一个时间刷新敌人的坦克
 		int timeNum = random.nextInt(5000)+2000;
@@ -152,6 +172,15 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 			//敌人和友军检测碰撞
 			enemyTank.collidesWithTanks(myTanks);
 			
+			//检测与河碰撞
+			enemyTank.collidesWithRivers(rivers);
+			
+			//检测与墙碰撞
+			enemyTank.collidesWithWalls(walls);
+			
+			//与树相撞
+//			enemyTank.collidesWithTrees(trees);
+			
 			//敌人和敌人检测碰撞
 //			enemyTank.collidesWithTanks(enemyTanks);
 			enemyTank.draw(g);
@@ -171,9 +200,6 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 				a.draw(g);
 			}
 		}
-		//画墙
-		w1.draw(g);
-		w2.draw(g);
 		
 		//画自己的坦克
 		for(int i = 0;i<myTanks.size();i++) {
@@ -184,6 +210,15 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 			
 			//友军与敌人相撞
 			myTank.collidesWithTanks(enemyTanks);
+			
+			//检测与河碰撞
+			myTank.collidesWithRivers(rivers);
+			
+			//检测与墙碰撞
+			myTank.collidesWithWalls(walls);
+			
+			//与树相撞
+//			myTank.collidesWithTrees(trees);
 			
 			//判断友军与屏幕相撞
 			myTank.collidesWithScreen();
@@ -219,15 +254,28 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 		g.drawString("p2发出的子弹数:" + p2AllShotNum, 10, 130);
 		g.drawString("p1命中的子弹数:" + p1AllHitNum, 10, 150);
 		g.drawString("p2命中的子弹数:" + p2AllHitNum, 10, 170);
+		g.drawString("p1摧毁坦克数量:" + p1AllKillNum, 10, 190);
+		g.drawString("p2摧毁坦克数量:" + p2AllKillNum, 10, 210);
+		
+		//画树
+		for(int i = 0 ; i<trees.size();i++) {
+			Tree tree = trees.get(i);
+			tree.draw(g);
+		}
+		//画墙
+		for(int i = 0 ; i<walls.size();i++) {
+			Wall wall = walls.get(i);
+			wall.draw(g);
+		}
 		
 		//画数据统计
 		float num1,num2;
 		if(p1AllShotNum !=0) num1 = (float)(p1AllHitNum*100/p1AllShotNum);
 		else num1 = 0;
-		g.drawString("p1命中率:" + num1 +"%", 10, 190);
+		g.drawString("p1命中率:" + num1 +"%", 10, 230);
 		if(p2AllShotNum !=0) num2 = (float)(p2AllHitNum*100/p2AllShotNum);
 		else num2 = 0;
-		g.drawString("p2命中率:" + num2 +"%", 10, 210);
+		g.drawString("p2命中率:" + num2 +"%", 10, 250);
 	}
 	
 	
@@ -239,11 +287,15 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 			offScreenImage = this.createImage(GAME_WIDTH,GAME_HEIGHT);
 		}
 		Graphics gOffScreen = offScreenImage.getGraphics();//先拿到画笔
-		Color c = gOffScreen.getColor();//得到前景色
-		gOffScreen.setColor(FRONT_COLOR );	//设置前景色
-		gOffScreen.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);//填充画布
-		gOffScreen.setColor(c);//恢复回来颜色
-		paint(gOffScreen);//把图片画到虚拟图片
+		Graphics2D gOffScreen2 =(Graphics2D)gOffScreen;
+		Color c = gOffScreen2.getColor();//得到前景色
+		gOffScreen2.setColor(FRONT_COLOR );	//设置前景色
+		Toolkit kit = Toolkit.getDefaultToolkit();
+		Image img = kit.getImage("img/背景.jpg");
+		gOffScreen2.drawImage(img,0,0,null);
+		gOffScreen2.setColor(c);//恢复回来颜色
+		paint(gOffScreen2);//把图片画到虚拟图片
+		
 		g.drawImage(offScreenImage, 0, 0, null);//把虚拟图片一次性贴到画布上
 	}
 
@@ -317,6 +369,22 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 			enemyTanks.add(et);
 			tankName++;
 		}
+		
+		 //添加树
+		 for(int i = 0 ; i < 90 ;i++) {
+			 int m = random.nextInt(1920-60)+30;
+			 int n = random.nextInt(1050-60)+30;
+			 new CreateObstacle(m, n, true, 1, "tree",this,1);	 
+		 }
+		 
+		 //添加河流
+		 new CreateObstacle(400, 600, true, 10, "river",this,1);	
+		 new CreateObstacle(200, 200, true, 15, "river",this,1);
+		 
+		 //添加墙体
+		 new CreateObstacle(800, 580, true, 1, "wall",this,4);
+
+
 
 		 this.setLocation(GAME_POSITION_X,GAME_POSITION_Y);
 		 this.setSize(GAME_WIDTH,GAME_HEIGHT);
