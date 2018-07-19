@@ -35,7 +35,7 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	
 	public int enemyTankNum = 3;//敌人坦克数量
 	public int myTankNum = 2;//我的坦克数量
-	public int totalEnemyTankNum = 47;//库存坦克
+	public int totalEnemyTankNum = 10;//库存坦克
 	public int myTankSpeed = 12;//我的坦克速度
 	public int enemyTankSpeed = 7;//敌人坦克速度
 	public int tankName = 1;//坦克起始名字

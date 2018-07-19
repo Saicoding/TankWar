@@ -32,7 +32,7 @@ import shape.Vector;
 
 
 public class Tank extends MyPolygon{
-	private float lastX = 700,lastY=600,lastAngle=0;//上一次的坐标和中心坐标
+	private float lastAngle=0;//上一次的坐标和中心坐标
 	private Vector lastPosition = new Vector();
 	public  Timer timer = new Timer();
 	
@@ -84,7 +84,7 @@ public class Tank extends MyPolygon{
 	private int myTankShotSpeend = 20;//我的坦克射击速度
 	private int myTankTurnSpeed = 7;//我的坦克转弯速度
 
-	private int enemyTankMissileSpeed = 18;//敌人坦克子弹速度
+	private int enemyTankMissileSpeed = 8;//敌人坦克子弹速度
 	private int enemyTankTurnSpeed = 1;//敌人坦克转弯速度
 	
 	public boolean good =false;//好坏坦克
@@ -144,6 +144,9 @@ public class Tank extends MyPolygon{
 		this.initPoints();
 		this.initSpeedV();//初始化速度向量
 	}
+	/*
+	 * 根据坦克角度求速度向量
+	 */
 	public void initSpeedV() {
 	    float l = (float) ((angle * Math.PI) / 180);        
 	    float cosv = (float) Math.cos(l);  
@@ -151,6 +154,23 @@ public class Tank extends MyPolygon{
 		speedV.x = cosv*speed;
 		speedV.y = sinv*speed;
 	}
+	/*
+	 * 根据向量求角度
+	 */
+	public float getAngleByVector(Vector v) {
+		float theta = 0;
+		if(v.x == 0) {
+			theta = (float)(Math.PI/2);
+		}else {
+			theta = (float)(Math.atan(v.y / v.x));
+		}
+		
+		return (float)(180*theta/Math.PI);
+	}
+	
+	/*
+	 * 初始化坦克模型点
+	 */
 	public void initPoints() {
 		this.points.add(clockWiseTurn(new MyPoint(x-height/2,y-width/2),new MyPoint(x,y),angle));
 		this.points.add(clockWiseTurn(new MyPoint(x+height/2,y-width/2),new MyPoint(x,y),angle));
@@ -169,7 +189,15 @@ public class Tank extends MyPolygon{
 					bB = false;
 					bF = true;
 				}
-				randomTurnAngle = random.nextInt(360)-180;//随机一个角度
+				float shotAngle = enemyTankGetMypos();
+				
+				float turnAngle = (shotAngle - angle)%360;
+				
+				if(turnAngle > 180 )randomTurnAngle =(int)(360 - turnAngle);
+				else if(turnAngle < -180 )randomTurnAngle =(int)(360 + turnAngle);
+				else randomTurnAngle = (int)turnAngle;
+				
+//				randomTurnAngle = random.nextInt(360)-180;//随机一个角度
 				moveStep =random.nextInt(50)+20;
 				turning = true;
 			}
@@ -209,8 +237,7 @@ public class Tank extends MyPolygon{
 				if(this.leftTrackPosition >6)this.leftTrackPosition =0;					
 				if(this.rightTrackPosition <0)this.rightTrackPosition =6;
 			}
-		}
-		
+		}	
 	}
 	/*
 	 * 向前移动
@@ -238,6 +265,9 @@ public class Tank extends MyPolygon{
 			fireStep--;//敌军每移动一次,发火计步减一
 		}
 	}
+	/*
+	 * 敌人坦克射击方法
+	 */
 	public void enemyFire() {
 		if(good)return;
 		if(fireStep <=0) {
@@ -263,7 +293,7 @@ public class Tank extends MyPolygon{
 	}
 
 	/*
-	 * 
+	 * 每次转弯更新坦克模型点
 	 */
 	public void changePointTurned() {
 		ArrayList<MyPoint> mypoints =  new ArrayList<MyPoint>();
@@ -284,12 +314,7 @@ public class Tank extends MyPolygon{
 	 * 坦克移动方法
 	 */
 	public void move() {
-		lastX = x;
-		lastY = y;
 		lastAngle = angle;
-		lastPosition.x = x;
-		lastPosition.y = y;
-		
 		if(timer.getElaplseTime() > 1000) {
 			spi = false;
 			timer.reset();
@@ -319,18 +344,40 @@ public class Tank extends MyPolygon{
 		enemyFire();
 
 	}
-
-	
-	
 	/*
-	 * 回退上一帧状态
+	 * 敌人坦克得到我的坦克方向向量
 	 */
-	public void goBackLastFrame() {
-		x = lastX;
-		y = lastY;
-		angle = lastAngle;
-		changePointTurned();
+	private float enemyTankGetMypos() {
+		float theta = 0;
+		//得到要打击的玩家坦克
+		if(tc.myTanks.size() == 0) return 0;
+		int num = random.nextInt(tc.myTanks.size());
+		System.out.println(num);
+		Tank myTank = tc.myTanks.get(num);
+		MyPoint enemyCenter = centroid();
+		MyPoint myTankCenter = myTank.centroid();
+		
+		Vector findMe = new Vector(myTankCenter).subTract(new Vector(enemyCenter));
+		
+		if(findMe.x == 0) {
+			theta = (float)(Math.PI/2);
+		}else {
+			theta = (float)(Math.atan(findMe.y / findMe.x));
+		}
+		float shotAngle = (float)(180*theta/Math.PI);
+		
+		//两种情况	
+		if((myTankCenter.x < enemyCenter.x && myTankCenter.y > enemyCenter.y) ||
+			(myTankCenter.x < enemyCenter.x && myTankCenter.y < enemyCenter.y)	
+				) {
+			shotAngle = 180+shotAngle;
+		}else if((myTankCenter.x > enemyCenter.x && myTankCenter.y < enemyCenter.y)) {
+			shotAngle = 360+shotAngle;
+		}
+		
+		return shotAngle;
 	}
+			
 
 	/*
 	 * 更新所有点
@@ -362,7 +409,7 @@ public class Tank extends MyPolygon{
 				tc.enemyTanks.remove(this);
 				return;
 			}else {
-//				tc.myTanks.remove(this);
+				tc.myTanks.remove(this);
 				return;
 			}
 		}
