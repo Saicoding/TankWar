@@ -16,7 +16,9 @@ import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.Random;
 
+import Obstacle.MyScreen;
 import Obstacle.River;
+import Obstacle.Screens;
 import Obstacle.Tree;
 import Obstacle.Wall;
 import Thread.RemoveAnimateThread;
@@ -31,9 +33,9 @@ import Thread.RemoveAnimateThread;
  */
 public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方法，建议用这种方式
 	
-	public int enemyTankNum = 0;//敌人坦克数量
-	public int myTankNum = 1;//我的坦克数量
-	public int totalEnemyTankNum = 0;//库存坦克
+	public int enemyTankNum = 3;//敌人坦克数量
+	public int myTankNum = 2;//我的坦克数量
+	public int totalEnemyTankNum = 47;//库存坦克
 	public int myTankSpeed = 12;//我的坦克速度
 	public int enemyTankSpeed = 7;//敌人坦克速度
 	public int tankName = 1;//坦克起始名字
@@ -59,11 +61,13 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	public int p2AllKillNum = 0;//击杀数量
 	
 	public int time = 0;
+	public int flashTankStation;
 	
 	public Timer timer1 = new Timer();//生成血块计时器
 	public Timer timer2 = new Timer();//刷新敌人坦克计时器
 	public Timer timer3 = new Timer();//刷新动画等待时间
-	
+
+	public ArrayList<MyScreen> screens = new ArrayList<MyScreen>();
 	public ArrayList<Tank> myTanks =new ArrayList<Tank>();//自己坦克数组
 	public ArrayList<Tank> enemyTanks = new ArrayList<Tank>();//敌人坦克数组
 	
@@ -138,14 +142,15 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 
 		
 		//每隔随机一个时间刷新敌人的坦克
-		int timeNum = random.nextInt(5000)+2000;
-		int pos = random.nextInt(3);
+		int timeNum = random.nextInt(1000)+1000;
+		
 		int space =0;
-		if(pos == 2) space =52;	
+		if(flashTankStation == 2) space =52;
 		if(timer2.getElaplseTime()>timeNum && totalEnemyTankNum>0) {//如果刷新坦克timer大于指定时间,就启动动画timer,并暂停刷新坦克
+			flashTankStation = random.nextInt(3);				
 			timer3.start();
 			timer2.reset();
-			Animate a = new Animate((GAME_WIDTH-120)/2*pos-space+40,85,"born",11,this);//生成动画
+			Animate a = new Animate((GAME_WIDTH-120)/2*flashTankStation-space+40,85,"born",11,this);//生成动画
 			animates.add(a);
 		}
 		if(timer3.getElaplseTime()>500) {//如果动画时间超过4秒
@@ -155,7 +160,7 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 			for(int i =0 ;i<25;i++) {
 				colorList.add(new Color(random.nextInt(150),random.nextInt(150),random.nextInt(150)));
 			}
-			Tank et =new Tank((GAME_WIDTH-120)/2*pos-space+40,85,colorList,false,enemyTankSpeed,90,this);
+			Tank et =new Tank((GAME_WIDTH-120)/2*flashTankStation-space+40,85,colorList,false,enemyTankSpeed,90,this);
 			et.name = tankName+"";		
 			totalEnemyTankNum--;
 			enemyTanks.add(et);
@@ -167,7 +172,7 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 		for(int i = 0;i<enemyTanks.size();i++) {
 			Tank enemyTank =enemyTanks.get(i);	
 			//检测敌人坦克与屏幕相撞
-			enemyTank.collidesWithScreen();	
+			enemyTank.collidesWithScreens(screens);	
 			
 			//敌人和友军检测碰撞
 			enemyTank.collidesWithTanks(myTanks);
@@ -179,10 +184,10 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 			enemyTank.collidesWithWalls(walls);
 			
 			//与树相撞
-//			enemyTank.collidesWithTrees(trees);
+			enemyTank.collidesWithTrees(trees);
 			
 			//敌人和敌人检测碰撞
-//			enemyTank.collidesWithTanks(enemyTanks);
+			enemyTank.collidesWithTanks(enemyTanks);
 			enemyTank.draw(g);
 			Graphics2D g2 = (Graphics2D)g;
 			Color c = g2.getColor();
@@ -206,7 +211,7 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 			Tank myTank =myTanks.get(i);
 			
 			//判断友军与友军相撞
-//			myTank.collidesWithTanks(myTanks);
+			myTank.collidesWithTanks(myTanks);
 			
 			//友军与敌人相撞
 			myTank.collidesWithTanks(enemyTanks);
@@ -221,7 +226,7 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 //			myTank.collidesWithTrees(trees);
 			
 			//判断友军与屏幕相撞
-			myTank.collidesWithScreen();
+			myTank.collidesWithScreens(screens);	
 			myTank.draw(g);			
 			myTank.collidesWithTools();//
 			
@@ -291,7 +296,7 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 		Color c = gOffScreen2.getColor();//得到前景色
 		gOffScreen2.setColor(FRONT_COLOR );	//设置前景色
 		Toolkit kit = Toolkit.getDefaultToolkit();
-		Image img = kit.getImage("img/背景.jpg");
+		Image img = kit.getImage("img/背景蓝.jpg");
 		gOffScreen2.drawImage(img,0,0,null);
 		gOffScreen2.setColor(c);//恢复回来颜色
 		paint(gOffScreen2);//把图片画到虚拟图片
@@ -310,6 +315,9 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	 * 
 	 */
 	public void launchFream() {
+		Screens s = new Screens(this);
+		s.getScreens();
+		screens.addAll(s.screens);
 		//启动计时器
 		timer1.start();
 		timer2.start();
@@ -371,19 +379,46 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 		}
 		
 		 //添加树
-		 for(int i = 0 ; i < 90 ;i++) {
-			 int m = random.nextInt(1920-60)+30;
-			 int n = random.nextInt(1050-60)+30;
-			 new CreateObstacle(m, n, true, 1, "tree",this,1);	 
-		 }
+		new CreateObstacle(885, 400, true, 4, "tree",this,1);	 
+		new CreateObstacle(885, 732, true, 4, "tree",this,1);	
+		
+		//在河流中间随机树
+		for(int i = 0;i < 10;i++) {
+			int m = random.nextInt(1596-455)+455;
+			int n = random.nextInt(696-435)+435;
+			new CreateObstacle(m, n, true, 1, "tree",this,1);
+		}
+//		new CreateObstacle(485, 465, true, 19, "tree",this,1);
+//		new CreateObstacle(515, 516, true, 18, "tree",this,1);
+//		new CreateObstacle(485, 567, true, 19, "tree",this,1);
+//		new CreateObstacle(515, 618, true, 18, "tree",this,1);
+//		new CreateObstacle(485, 669, true, 19, "tree",this,1);
+		
+		new CreateObstacle(370, 530, true, 2, "tree",this,1);	
+		new CreateObstacle(370, 590, true, 2, "tree",this,1);
+		new CreateObstacle(89, 400, true, 3, "tree",this,1);
 		 
 		 //添加河流
-		 new CreateObstacle(400, 600, true, 10, "river",this,1);	
-		 new CreateObstacle(200, 200, true, 15, "river",this,1);
+		new CreateObstacle(0, 400, true, 1, "river",this,1);
+		new CreateObstacle(299, 400, true, 1, "river",this,1);	
+		
+		 new CreateObstacle(400, 400, true, 5, "river",this,1);	
+		 new CreateObstacle(1145, 400, true, 6, "river",this,1);	
+		 new CreateObstacle(400, 460, false, 1, "river",this,1);
+		 new CreateObstacle(400, 664, false, 2, "river",this,1);
+		 new CreateObstacle(501, 732, true, 4, "river",this,1);
+		 new CreateObstacle(1145, 732, true, 5, "river",this,1);
+		 new CreateObstacle(1650, 460, false, 5, "river",this,1);
+		 
+		 new CreateObstacle(0, 732, true, 5, "river",this,1);
+		 
+		 
 		 
 		 //添加墙体
-		 new CreateObstacle(800, 580, true, 1, "wall",this,4);
 
+		 new CreateObstacle(500, 900, true, 1, "wall",this,2);
+		 new CreateObstacle(0, 300, true, 32, "wall",this,1);
+		 new CreateObstacle(1860, 360, false, 8, "wall",this,1);
 
 
 		 this.setLocation(GAME_POSITION_X,GAME_POSITION_Y);

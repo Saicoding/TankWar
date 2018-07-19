@@ -271,7 +271,6 @@ public class Missile extends ImagePolygonShape{
 	public boolean hitWalls(ArrayList<Wall> walls) {
 		for(int j =0;j < walls.size();j++) {
 			if(collidesWithWall(walls.get(j))) {
-				System.out.println(walls.get(j).live);
 				return true;
 			}
 		}	

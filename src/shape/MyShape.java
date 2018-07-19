@@ -53,6 +53,7 @@ public class MyShape {
 
 		   for (int i=0; i < axes.size(); ++i) {
 		      Vector axis = axes.get(i);
+		   
 		      Projection projection1 = shape1.project(axis);
 		      Projection projection2 = shape2.project(axis);
 		      overlap = projection1.getOverlap(projection2);
@@ -63,8 +64,6 @@ public class MyShape {
 		      else {
 		         if (overlap < minimumOverlap) {
 		            minimumOverlap = overlap;
-		            if(displacement.x > 0) axis.x = -axis.x;
-		            if(displacement.y > 0) axis.y = -axis.y;
 		            axisWithSmallestOverlap = axis;    
 		         }
 		      }

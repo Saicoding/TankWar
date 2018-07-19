@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Random;
 
+import Obstacle.MyScreen;
 import Obstacle.River;
 import Obstacle.Tree;
 import Obstacle.Wall;
@@ -26,6 +27,7 @@ import Thread.SoundThread;
 import shape.MininumTranslationVector;
 import shape.MyPoint;
 import shape.MyPolygon;
+import shape.MyShape;
 import shape.Vector;
 
 
@@ -37,7 +39,7 @@ public class Tank extends MyPolygon{
 	public String owner;
 	public boolean spi = false;//是否是间谍坦克
 	public int serialHitNum =0;//连续击中坦克数量
-	public int toSpiNum = 5;//变成自己坦克需要打击的数量
+	public int toSpiNum = 0;//变成自己坦克需要打击的数量
 	public Tank lastHitTank;//上一次击中的坦克
 
 	public float angle = 0;//坦克角度
@@ -119,9 +121,9 @@ public class Tank extends MyPolygon{
 			this.spi = true;	
 		}
 		else {
-			this.life =8;//如果是敌人,生命初始是1
+			this.life =1;//如果是敌人,生命初始是1
 			this.fullLife = life;//最大生命
-			this.missilesNum = 50;//初始弹药数量
+			this.missilesNum = 500;//初始弹药数量
 			this.fullMissilesNum = missilesNum;//初始弹药库
 			this.stop =false;//敌人初始不停止
 			this.bF = true;//如果是敌人,坦克初始向前
@@ -288,7 +290,7 @@ public class Tank extends MyPolygon{
 		lastPosition.x = x;
 		lastPosition.y = y;
 		
-		if(timer.getElaplseTime() > 50000) {
+		if(timer.getElaplseTime() > 1000) {
 			spi = false;
 			timer.reset();
 		}
@@ -591,20 +593,6 @@ public class Tank extends MyPolygon{
 	}
 
 // ******************************************************碰撞检测
-	public void enemyCollidesWithWallAndTank() {
-		if(!good) {//如果是敌人坦克
-			turning = false;
-			if(bB) {//如果是后退状态
-				bB = false;
-				bF = true;
-				moveStep = random.nextInt(5)+3;
-			}else {
-				bB = true;
-				bF = false;
-				moveStep = random.nextInt(5)+3;
-			}
-		}
-	}
 	/*
 	 * 检测与血块碰撞
 	 */
@@ -636,24 +624,19 @@ public class Tank extends MyPolygon{
 			Tree tree = trees.get(i);
 			MininumTranslationVector mtv=collidesWith(tree,displacement);
 			if(mtv.axis !=null && mtv.overlap !=0) {
-				goBackLastFrame();
-				enemyCollidesWithWallAndTank();
+				selide(mtv,tree);
 			}
 		}
 	}
 	/*
 	 * 与河碰撞
 	 */
-	public void collidesWithRivers(ArrayList<River> rivers) {
-		Vector position = new Vector(new MyPoint(x,y));
-		Vector displacement = position.subTract(lastPosition);
-		
+	public void collidesWithRivers(ArrayList<River> rivers) {		
 		for(int i = 0 ;i<rivers.size();i ++) {
 			River river = rivers.get(i);
-			MininumTranslationVector mtv=collidesWith(river,displacement);
+			MininumTranslationVector mtv=collidesWith(river,speedV);
 			if(mtv.axis !=null && mtv.overlap !=0) {
-				goBackLastFrame();
-				enemyCollidesWithWallAndTank();
+				selide(mtv,river);
 			}
 		}
 	}
@@ -662,28 +645,25 @@ public class Tank extends MyPolygon{
 	 * 与墙碰撞
 	 */
 	public void collidesWithWalls(ArrayList<Wall> walls) {
-		Vector position = new Vector(new MyPoint(x,y));
-		Vector displacement = position.subTract(lastPosition);
-		
 		for(int i = 0 ;i<walls.size();i ++) {
 			Wall wall = walls.get(i);
-			MininumTranslationVector mtv=collidesWith(wall,displacement);
+			MininumTranslationVector mtv=collidesWith(wall,speedV);
 			if(mtv.axis !=null && mtv.overlap !=0) {
-				goBackLastFrame();
-				enemyCollidesWithWallAndTank();
+				selide(mtv,wall);
 			}
 		}
 	}
 	
-	public void collidesWithScreen() {
-		if(getMostXY("left", "min") < 0 || getMostXY("right", "max")>TankClient.GAME_WIDTH || getMostXY("top", "min")<24||getMostXY("bottom", "max")>TankClient.GAME_HEIGHT) {
-			goBackLastFrame();
-			enemyCollidesWithWallAndTank();
-		}else {//如果没发生碰撞
+	public void collidesWithScreens(ArrayList<MyScreen> screens) {
+		for(int i = 0; i < screens.size(); i++) {
+			MyPolygon screen = screens.get(i);
+			MininumTranslationVector mtv = collidesWith(screen,speedV);			
+			if(mtv.axis!=null && mtv.overlap!=0) {					
+				selide(mtv,screen);
+			}
 
 		}
 	}
-
 	
 	public MininumTranslationVector collidesWithTank(Tank t) {
 		Vector position = new Vector(new MyPoint(x,y));
@@ -700,40 +680,38 @@ public class Tank extends MyPolygon{
 		for(int i = 0; i < tanks.size(); i++) {
 			Tank t = tanks.get(i);
 			if(this != t) {
-
 				MininumTranslationVector mtv = collidesWithTank(t);
 				if(mtv.axis!=null && mtv.overlap!=0) {					
-					goBackLastFrame();	
-//					separate(mtv);
-					enemyCollidesWithWallAndTank();
+					selide(mtv,t);
 				}
 			}
 		}
 	}	
 	/*
-	 * 分离方法
+	 * 滑动方法
 	 */
-	public void separate(MininumTranslationVector mtv) {
+	public void selide(MininumTranslationVector mtv,MyShape shape) {
 		float dx,dy;
 		float theta = 0;
+		MyPoint center1 = centroid();
+		MyPoint center2 = shape.centroid();	
 		
 		if(mtv.axis.x == 0) {
 			theta = (float)(Math.PI/2);
 		}else {
 			theta = (float)(Math.atan(mtv.axis.y / mtv.axis.x));
 		}
-		Float dot = mtv.axis.dotProduct(speedV);
-		if(dot < 0){
-			dy = (float)(mtv.overlap * Math.sin(theta));
-			dx = (float)(mtv.overlap * Math.cos(theta));
-		}else {
-			dy = 0;
-			dx = 0;
-		}
-
-		if (mtv.axis.x < 0 && dx > 0 || mtv.axis.x > 0 && dx < 0) dx = -dx; // account for negative angle
-		if (mtv.axis.y < 0 && dy > 0 || mtv.axis.y > 0 && dy < 0) dy = -dy;
-		setSpeedV(speedV.x,speedV.y);//每次前后移动都设置下速度方向
+		
+		dy = (float)(mtv.overlap * Math.sin(theta));
+		dx = (float)(mtv.overlap * Math.cos(theta));
+		
+		//根据速度方向和中心位置,可以判断坦克和障碍物或者坦克如何碰撞的
+		if(speedV.x <0 && center1.x < center2.x || speedV.x >0 && center1.x < center2.x)dx = -Math.round(Math.abs(dx));//如果速度x方向向左,并且运动物体中心x小于被撞物体中心x,那么 dx就是负数
+		else if(speedV.x <0 && center1.x > center2.x ||speedV.x >0 && center1.x > center2.x)dx = Math.round(Math.abs(dx));//如果速度x方向向左,并且运动物体中心x大于被撞物体中心x,那么 dx就是正数
+		
+		if(speedV.y <0 && center1.y < center2.y || speedV.y >0 && center1.y < center2.y)dy = -Math.round(Math.abs(dy));
+		else if(speedV.y <0 && center1.y > center2.y || speedV.y >0 && center1.y > center2.y)dy = Math.round(Math.abs(dy));
+		
 		update(dx,dy);
 	}
 
@@ -775,7 +753,7 @@ public class Tank extends MyPolygon{
 	public void superFire() {
 		int[] dirs = {0,45,90,135,180,225,270,315};
 		for(int i=0 ;i<dirs.length ;i++) {
-			Missile m = fire(2,100,dirs[i]);
+			Missile m = fire(10,100,dirs[i]);
 			tc.missiles.add(m);
 		}		
 	}

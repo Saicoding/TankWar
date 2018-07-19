@@ -102,5 +102,13 @@ public class Vector {
 	     
 	     return v;
 	}
-	
+	/*
+	 * 反向向量
+	 */
+	public Vector reverse() {
+		Vector rv = new Vector();
+		rv.x = -x;
+		rv.y = -y;
+		return rv;
+	}
 }
