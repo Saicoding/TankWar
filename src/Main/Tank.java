@@ -103,8 +103,6 @@ public class Tank extends MyPolygon{
 	/*
 	 * 构造函数
 	 */
-	
-
 	public Tank(float x, float y, ArrayList<Color> colorList,boolean good,int speed) {//好坏坦克用good区分
 		this.x = x;
 		this.y = y;
@@ -284,7 +282,7 @@ public class Tank extends MyPolygon{
 	      
 	    //sin/cos value  
 		float cosv = (float)Math.cos(l);  
-		float sinv = (float) Math.sin(l);  
+		float sinv = (float)Math.sin(l);  
 	  
 	    // calc new Point  
 		float newX = (p.x - cp.x) * cosv - (p.y - cp.y) * sinv + cp.x;  

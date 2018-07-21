@@ -33,9 +33,9 @@ import Thread.RemoveAnimateThread;
  */
 public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方法，建议用这种方式
 	
-	public int enemyTankNum = 3;//敌人坦克数量
+	public int enemyTankNum = 0;//敌人坦克数量
 	public int myTankNum = 2;//我的坦克数量
-	public int totalEnemyTankNum = 10;//库存坦克
+	public int totalEnemyTankNum = 2;//库存坦克
 	public int myTankSpeed = 12;//我的坦克速度
 	public int enemyTankSpeed = 7;//敌人坦克速度
 	public int tankName = 1;//坦克起始名字
@@ -315,7 +315,7 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 	 * 
 	 */
 	public void launchFream() {
-		Screens s = new Screens(this);
+		Screens s = new Screens();
 		s.getScreens();
 		screens.addAll(s.screens);
 		//启动计时器
@@ -351,6 +351,7 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 				colorList.add(new Color(255,0,0));//19
 			}
 			Tank t = new Tank(300*(i+1),GAME_HEIGHT-100,colorList,true,myTankSpeed,-90,this);
+			
 			animates.add(new Animate(t.x,t.y,"born",11,this));
 			if(i == 0 ) {
 				t.name = "冶";
@@ -408,15 +409,10 @@ public class TankClient extends Frame{//通过继承Frame 可以添加自己的成员变量和方
 		 new CreateObstacle(400, 664, false, 2, "river",this,1);
 		 new CreateObstacle(501, 732, true, 4, "river",this,1);
 		 new CreateObstacle(1145, 732, true, 5, "river",this,1);
-		 new CreateObstacle(1650, 460, false, 5, "river",this,1);
-		 
+		 new CreateObstacle(1650, 460, false, 5, "river",this,1);	 
 		 new CreateObstacle(0, 732, true, 5, "river",this,1);
-		 
-		 
-		 
+		 	 
 		 //添加墙体
-
-		 new CreateObstacle(500, 900, true, 1, "wall",this,2);
 		 new CreateObstacle(0, 300, true, 32, "wall",this,1);
 		 new CreateObstacle(1860, 360, false, 8, "wall",this,1);
 

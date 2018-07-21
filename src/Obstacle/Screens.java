@@ -9,8 +9,7 @@ public class Screens {
 	public ArrayList<MyScreen> screens = new ArrayList<MyScreen>();
 	public TankClient tc;
 
-	public Screens(TankClient tc) {
-		this.tc = tc;
+	public Screens() {
 	}
 	
 	public void getScreens(){
